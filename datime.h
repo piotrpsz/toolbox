@@ -289,7 +289,10 @@ namespace bee {
             namespace chrono = std::chrono;
             date::year_month_day const ymd = date::year(dt.y) / dt.m / dt.d;
             auto const days = static_cast<date::local_days>(ymd);
-            auto t = days + chrono::hours(tm.h) + chrono::minutes(tm.m) + chrono::seconds(tm.s);
+            const auto t = days
+                + chrono::hours(tm.h)
+                + chrono::minutes(tm.m)
+                + chrono::seconds(tm.s);
             return make_zoned(zone, t);
         }
     };
