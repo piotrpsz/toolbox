@@ -8,6 +8,7 @@ find_package(date REQUIRED)
 add_library(toolbox STATIC
         toolbox.h toolbox.cpp
         datime.h
+        all.h
 )
 
 target_include_directories(toolbox PUBLIC date)
