@@ -53,10 +53,15 @@ namespace bee {
             if (d > rhs.d) return true;
             return false;
         }
-
+        [[nodiscard]] std::string to_string() const noexcept {
+            return std::format("[.y={}, .m={}, .d={}]", y, m, d);
+        }
     };
     struct time_t {
         int h{}, m{}, s{};
+        [[nodiscard]] std::string to_string() const noexcept {
+            return std::format("[.h={}, .m={}, .s={}]", h, m, s);
+        }
     };
 
     class datime final {
@@ -123,12 +128,25 @@ namespace bee {
         }
 
         /// Zwraca różnicę jako liczbę minut.
+        /// \return Liczba (uint) minut pomiedzy punktami-w-czasie.\n
+        /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
         [[nodiscard]]
-        int minutes_from(datime const& rhs) const noexcept {
+        uint minutes_from(datime const& rhs) const noexcept {
             auto const a = date::floor<std::chrono::minutes>(tp_.get_sys_time());
             auto const b = date::floor<std::chrono::minutes>(rhs.tp_.get_sys_time());
-            const auto diff = (b - a).count();
-            return static_cast<int>(diff);
+            auto const diff = (a < b) ? (b - a).count() : (a - b).count();
+            return static_cast<uint>(diff);
+        }
+
+        /// Zwraca różnicę pomiędzy datami jako liczbę sekund.
+        /// \return Liczba (uint) sekund pomiedzy punktami-w-czasie.\n
+        /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
+        [[nodiscard]]
+        uint seconds_from(datime const& rhs) const noexcept {
+            auto const a = date::floor<std::chrono::seconds>(tp_.get_sys_time());
+            auto const b = date::floor<std::chrono::seconds>(rhs.tp_.get_sys_time());
+            auto const diff = (a < b) ? (b - a).count() : (a - b).count();
+            return static_cast<uint>(diff);
         }
 
         /// Obliczenie 'timestamp' (liczba sekund od początku epoki).
@@ -173,20 +191,27 @@ namespace bee {
             return *this;
         }
 
-        /// Początek dnia dla daty.
-        datime& beginning_day() noexcept {
-            return clear_time();
+        /// Nowa data odpowiadająca początkowi dnia.
+        /// Aktualny obiekt pozostaje niezmieniony.
+        [[nodiscard]] datime beginning_day() const noexcept {
+            auto dt = datime{tp_};
+            dt.clear_time();
+            return dt;
         }
 
-        /// Koniec dnia dla daty.
-        datime& end_day() noexcept {
-            return set_time({23,59,59});
+        /// Nowa data odpowiadająca końcowi dnia.
+        /// Aktualny obiekt pozostaje niezmieniony,
+        [[nodiscard]] datime end_day() const noexcept {
+            auto dt = datime{tp_};
+            dt.set_time({23,59,59});
+            return dt;
         }
+
         /// Wyznaczenie składników daty (bez czasu).
         [[nodiscard]] date_t date_components() const noexcept {
             namespace chrono = std::chrono;
-            auto days = date::floor<chrono::days>(tp_.get_local_time());
-            date::year_month_day ymd{days};
+            auto const days = date::floor<chrono::days>(tp_.get_local_time());
+            date::year_month_day const ymd{days};
             auto const year = static_cast<int>(ymd.year());
             auto const month = static_cast<int>(static_cast<unsigned>(ymd.month()));
             auto const day = static_cast<int>(static_cast<unsigned>(ymd.day()));
@@ -243,13 +268,51 @@ namespace bee {
             return datime(make_zoned(zone, secs));
         }
 
+        /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby godzin.
+        [[nodiscard]] datime add_hours(int const hrs) const noexcept {
+            namespace chrono = std::chrono;
+            const auto days = chrono::floor<chrono::days>(tp_.get_local_time());
+            date::hh_mm_ss const hms{tp_.get_local_time() - days};
+            auto const secs = chrono::floor<chrono::seconds>(days)
+                    + (hms.hours() + chrono::hours(hrs))
+                    + hms.minutes()
+                    + hms.seconds();
+            return datime(make_zoned(zone, secs));
+        }
+
+        /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby minut.
+        [[nodiscard]] datime add_minutes(int const min) const noexcept {
+            namespace chrono = std::chrono;
+            const auto days = chrono::floor<chrono::days>(tp_.get_local_time());
+            date::hh_mm_ss const hms{tp_.get_local_time() - days};
+            auto const secs = chrono::floor<chrono::seconds>(days)
+                    + hms.hours()
+                    + (hms.minutes() + chrono::minutes(min))
+                    + hms.seconds();
+            return datime(make_zoned(zone, secs));
+        }
+
+        /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby sekond.
+        [[nodiscard]] datime add_seconds(int const sec) const noexcept {
+            namespace chrono = std::chrono;
+            const auto days = chrono::floor<chrono::days>(tp_.get_local_time());
+            date::hh_mm_ss const hms{tp_.get_local_time() - days};
+            auto const secs = chrono::floor<chrono::seconds>(days)
+                    + hms.hours()
+                    + hms.minutes()
+                    + (hms.seconds() + chrono::seconds(sec));
+            return datime(make_zoned(zone, secs));
+        }
+
+        /// Nowa data oznaczjąca dzień następny.
         [[nodiscard]]
         datime next_day() const noexcept {
             return add_days(1);
         }
 
+        /// Nowa data oznaczająca dzień poprzedni.
         [[nodiscard]]
-        datime  prev_day() const noexcept {
+        datime prev_day() const noexcept {
             return add_days(-1);
         }
 
@@ -273,7 +336,7 @@ namespace bee {
         /// Lokalna data-czas w postaci tekstu.
         /// \return Tekst z lokalną datą-czasem.
         [[nodiscard]]
-        std::string  str() const noexcept {
+        std::string  to_string() const noexcept {
             std::stringstream ss{};
             ss << tp_.get_local_time();
             return ss.str();
