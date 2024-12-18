@@ -41,7 +41,7 @@ namespace bee {
 
         /// Konwersja tekstu z liczbą całkowitą na liczbę.
         /// \param sv View tekstu zawierającego liczbę,
-        /// \param base System, w którem liczba jest prezentowana w tekście (domyślnie 10)
+        /// \param base System, w którym liczba jest prezentowana w tekście (domyślnie 10)
         /// \return Opcjonalnie wyznaczona liczba
         static auto to_int(
             std::string_view sv,
@@ -49,7 +49,7 @@ namespace bee {
         -> std::optional<int>;
 
         /// Konwersja liczby całkowitej na tekst.
-        /// Formatownie obejmuje separatory tysięcy..
+        /// Formatowanie obejmuje separatory tysięcy.
         /// \param value Wartość do sformatowania,
         /// \param separator Znak oddzielający grupy tysięcy.
         /// \return Tekst ze sformatowaną liczbą całkowitą.
@@ -58,8 +58,8 @@ namespace bee {
             char separator = THOUSAND_SEPARATOR) noexcept
         -> std::string;
 
-        /// Konwersja liczby zmienno-przecinkowej na tekst.
-        /// Formatownie obejmuje separatory tysięcy w liczbie przed przecinkiem.
+        /// Konwersja liczby zmiennoprzecinkowej na tekst.
+        /// Formatowanie obejmuje separatory tysięcy w liczbie przed przecinkiem.
         /// Określić można również liczbę cyfr po przecinku.
         /// \param value Wartość do sformatowania,
         /// \param n Liczba cyfr po kropce (zaokrąglenie)
@@ -73,7 +73,7 @@ namespace bee {
             char separator = THOUSAND_SEPARATOR) noexcept
         -> std::string;
 
-        /// Komwersja wektora bajtów (unsigned char) na tekst.
+        /// Konwersja wektora bajtów (unsigned char) na tekst.
         /// \param bytes Span bajtów do konwersji,
         /// \param n Liczba bajtów do konwersji (-1 dla wszystkich).
         static auto to_string(
@@ -96,7 +96,7 @@ namespace bee {
             return s;
         }
 
-        /// Usunięcie zamykającyh (końcowych) białych znaków (z prawej strony).
+        /// Usunięcie zamykających (końcowych) białych znaków (z prawej strony).
         /// \param s Tekst, z którego należy usunąć białe znaki
         /// \return Tekst bez zamykających białych znaków.
         static std::string trim_right(std::string s) noexcept {
@@ -111,7 +111,7 @@ namespace bee {
             return trim_left(trim_right(std::move(s)));
         }
 
-        /// Podział przysłanego stringa na wektor stringów. \n
+        /// Podział przysłanego tekstu na wektor tekstów. \n
         /// Wyodrębnianie stringów składowych odbywa się po napotkaniu delimiter'a.
         /// \param text - string do podziału,
         /// \param delimiter - znak sygnalizujący podział,
@@ -143,9 +143,13 @@ namespace bee {
         -> std::vector<unsigned char>;
 
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
-        /// usage: testowanie funkcji add()\n
-        /// auto r = box::execution_timer([]() { add(2, 3); }, 10 ); \n
+        /// Usage: testowanie funkcji add()\n
+        /// \code
+        /// auto r = box::execution_timer([]()
+        ///     { add(2, 3); },
+        ///     1'000); \n
         /// std::print ("czas wykonania: {}\n", r ); \n
+        /// \endcode
         /// \param fn Obiekt funkcyjny, dla którego mierzymy czas wykonania,
         /// \param args Parametry, które należy przekazać do obiektu funkcyjnego,
         /// \param n Liczba iteracji (liczba wywołań obiektu funkcyjnego).
