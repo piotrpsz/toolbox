@@ -33,6 +33,7 @@
 #include <sstream>
 
 namespace bee {
+
     class box {
         static constexpr auto DECIMAL_POINT = ',';
         static constexpr auto THOUSAND_SEPARATOR = '.';
@@ -54,9 +55,35 @@ namespace bee {
         /// \param separator Znak oddzielający grupy tysięcy.
         /// \return Tekst ze sformatowaną liczbą całkowitą.
         static auto to_string(
-            std::integral auto value,
-            char separator = THOUSAND_SEPARATOR) noexcept
-        -> std::string;
+            std::integral auto const value,
+            char const separator = THOUSAND_SEPARATOR) noexcept
+        -> std::string
+        {
+            auto const text = std::to_string(value);
+            auto const size = text.size();
+            std::vector<char> buffer;
+            buffer.reserve(size + size/3);
+            auto offset = 0;
+
+            if (value < 0) {
+                buffer.push_back('-');
+                offset = 1;
+            }
+
+            auto comma_idx = 3 - (size - offset) % 3;
+            if (comma_idx == 3) comma_idx = 0;
+
+            for (auto i = offset; i < size; ++i) {
+                if (comma_idx == 3) {
+                    buffer.push_back(separator);
+                    comma_idx = 0;
+                }
+                ++comma_idx;
+                buffer.push_back(text[i]);
+            }
+
+            return {buffer.begin(), buffer.end()};
+        }
 
         /// Konwersja liczby zmiennoprzecinkowej na tekst.
         /// Formatowanie obejmuje separatory tysięcy w liczbie przed przecinkiem.
@@ -67,11 +94,44 @@ namespace bee {
         /// \param separator Znak oddzielający grupy tysięcy.
         /// \return Tekst ze sformatowaną liczbą.
         static auto to_string(
-            std::floating_point auto value,
-            int n = DIGITS_AFTER_DECIMAL_POINT,
-            char point = DECIMAL_POINT,
-            char separator = THOUSAND_SEPARATOR) noexcept
-        -> std::string;
+            std::floating_point auto const value,
+            int const n = DIGITS_AFTER_DECIMAL_POINT,
+            char const point = DECIMAL_POINT,
+            char const separator = THOUSAND_SEPARATOR) noexcept
+        -> std::string
+        {
+            auto const fmt = std::format("{{:.{}f}}", n);
+            auto const text = std::vformat(fmt, std::make_format_args(value));
+            auto const size = text.size();
+            auto const point_idx = std::ranges::find(text, '.') - text.begin();
+            auto offset = 0;
+
+            std::vector<char> buffer;
+            buffer.reserve(size + point_idx/3);
+
+            if (value < 0) {
+                buffer.push_back('-');
+                offset = 1;
+            }
+
+            auto comma_idx = 3 - (point_idx - offset) % 3;
+            if (comma_idx == 3) comma_idx = 0;
+
+            for (auto i = offset; i < point_idx; ++i) {
+                if (comma_idx == 3) {
+                    buffer.push_back(separator);
+                    comma_idx = 0;
+                }
+                ++comma_idx;
+                buffer.push_back(text[i]);
+            }
+
+            // Dodajemy kropkę dziesiętną i cyfry po kropce.
+            buffer.push_back(point);
+            std::ranges::copy_n(text.begin() + point_idx + 1, n, std::back_inserter(buffer));
+
+            return {buffer.begin(), buffer.end()};
+        }
 
         /// Konwersja wektora bajtów (unsigned char) na tekst.
         /// \param bytes Span bajtów do konwersji,
@@ -104,7 +164,7 @@ namespace bee {
             return s;
         }
 
-        /// Usunięcie początkowych i końcowych białych znaków (z obu stron).
+        /// Usunięcie początkowych i końcowych białych znaków.
         /// \param s Tekst, z którego należy usunąć białe znaki
         /// \return Tekst bez początkowych i końcowych białych znaków.
         static std::string trim(std::string s) noexcept {
@@ -112,25 +172,29 @@ namespace bee {
         }
 
         /// Podział przysłanego tekstu na wektor tekstów. \n
-        /// Wyodrębnianie stringów składowych odbywa się po napotkaniu delimiter'a.
-        /// \param text - string do podziału,
-        /// \param delimiter - znak sygnalizujący podział,
+        /// Wyodrębnianie tekstów składowych odbywa się po napotkaniu delimiter'a.
+        /// \param text Tekst do podziału,
+        /// \param delimiter Znak sygnalizujący podział,
         /// \return Wektor stringów.
         static auto split(
             std::string const& text,
             char delimiter) noexcept
         -> std::vector<std::string>;
 
-        /// Tworzy string będący złączeniem stringów przysłanych w wektorze. \n
-        /// Łączone stringi rozdzielone są przysłanym delimiter'em.
-        /// \param data Wektor stringów do połączenia,
-        /// \param delimiter Znak wstawiany pomiędzy łączonymi stringami.
+        /// Tworzy tekst będący złączeniem tekstów przysłanych w wektorze. \n
+        /// Łączone teksty rozdzielone są przysłanym delimiter'em.
+        /// \param data Wektor tekstów do połączenia,
+        /// \param delimiter Tekst wstawiany pomiędzy łączonymi tekstami.
         /// \return String jako suma połączonych stringów.
         static auto join(
             std::span<std::string> data,
             std::string_view delimiter = ",") noexcept
         -> std::string;
 
+        /// Zamiana wektora bajtów na tekst, w którym liczby rozdzielone są przecinkami.
+        /// \param data Wektor/span bajtów do konwersji.
+        /// \param as_hex Flaga określająca czy liczby mają być w reprezentacji szesnastkowej.
+        /// \return Tekst z liczbami.
         static auto bytes_to_string(
             std::span<unsigned char> data,
             bool as_hex = false) noexcept

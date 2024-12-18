@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 find_package(date REQUIRED)
 
 add_library(toolbox STATIC
-        toolbox.h toolbox.cpp
+        toolbox.cpp toolbox.h
         datime.h
         all.h
 )

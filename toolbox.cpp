@@ -28,6 +28,13 @@
 #include <charconv>
 
 namespace bee {
+
+    /****************************************************************
+    *                                                               *
+    *                        t o _ i n t                            *
+    *                                                               *
+    ****************************************************************/
+
     auto box::to_int(std::string_view sv, int const base) noexcept
     -> std::optional<int>
     {
@@ -45,76 +52,12 @@ namespace bee {
         return {};
     }
 
-    auto box::to_string(
-        std::integral auto const value,
-        char const separator) noexcept
-    -> std::string
-    {
-        auto const text = std::to_string(value);
-        auto const size = text.size();
-        std::vector<char> buffer;
-        buffer.reserve(size + size/3);
-        auto offset = 0;
-
-        if (value < 0) {
-            buffer.push_back('-');
-            offset = 1;
-        }
-
-        auto comma_idx = 3 - (size - offset) % 3;
-        if (comma_idx == 3) comma_idx = 0;
-
-        for (auto i = offset; i < size; ++i) {
-            if (comma_idx == 3) {
-                buffer.push_back(separator);
-                comma_idx = 0;
-            }
-            ++comma_idx;
-            buffer.push_back(text[i]);
-        }
-
-        return {buffer.begin(), buffer.end()};
-    }
-
-    auto box::to_string(
-        std::floating_point auto const value,
-        int const n,
-        char const point,
-        char const separator) noexcept
-    -> std::string
-    {
-        auto const fmt = std::format("{{:.{}f}}", n);
-        auto const text = std::vformat(fmt, std::make_format_args(value));
-        auto const size = text.size();
-        auto const point_idx = std::ranges::find(text, '.') - text.begin();
-        auto offset = 0;
-
-        std::vector<char> buffer;
-        buffer.reserve(size + point_idx/3);
-
-        if (value < 0) {
-            buffer.push_back('-');
-            offset = 1;
-        }
-
-        auto comma_idx = 3 - (point_idx - offset) % 3;
-        if (comma_idx == 3) comma_idx = 0;
-
-        for (auto i = offset; i < point_idx; ++i) {
-            if (comma_idx == 3) {
-                buffer.push_back(separator);
-                comma_idx = 0;
-            }
-            ++comma_idx;
-            buffer.push_back(text[i]);
-        }
-
-        // Dodajemy kropkę dziesiętną i cyfry po kropce.
-        buffer.push_back(point);
-        std::ranges::copy_n(text.begin() + point_idx + 1, n, std::back_inserter(buffer));
-
-        return {buffer.begin(), buffer.end()};
-    }
+    /****************************************************************
+    *                                                               *
+    *                      t o _ s t r i n g                        *
+    *                                                               *
+    *  std::span<unsigned char>                                     *
+    ****************************************************************/
 
     auto box::to_string(
         std::span<unsigned char const> bytes,
@@ -127,6 +70,11 @@ namespace bee {
             | std::ranges::to<std::string>();
     }
 
+    /****************************************************************
+    *                                                               *
+    *                         s p l i t                             *
+    *                                                               *
+    ****************************************************************/
     auto box::split(
         std::string const& text,
         char const delimiter) noexcept
@@ -136,17 +84,18 @@ namespace bee {
         auto const n = std::accumulate(
                 text.cbegin(),
                 text.cend(),
-                0,
+                size_t{},
                 [delimiter](int const count, char const c) {
                     return c == delimiter ? count + 1 : count;
                 }
         );
 
+        // Wektor o wstępnie zaalokowanej liczbie elementów.
         std::vector<std::string> tokens{};
         tokens.reserve(n + 1);
 
-        std::string token;
-        std::istringstream stream(text);
+        std::string token{};
+        std::istringstream stream{text};
         while (std::getline(stream, token, delimiter))
             if (auto line = trim(token); !line.empty())
                 tokens.push_back(std::move(line));
@@ -155,6 +104,11 @@ namespace bee {
         return tokens;
     }
 
+    /****************************************************************
+    *                                                               *
+    *                          j o i n                              *
+    *                                                               *
+    ****************************************************************/
 
     auto box::join(
         std::span<std::string> data,
@@ -164,16 +118,17 @@ namespace bee {
         const auto tokens_size = std::accumulate(
             std::begin(data),
             std::end(data),
-            ssize_t{0},
+            size_t{},
             [](auto const count, auto const& str) {
                return count + str.size();
             });
 
-
+        // String o wstępnie zaalokowanej liczbie znaków.
         std::string buffer{};
         buffer.reserve(tokens_size + data.size() - 1);
 
-        std::ranges::for_each(data.first(data.size() - 1), [&buffer, delimiter](auto const& token) {
+        // Ze spanu kopiujemy elementy od początku, ale bez ostatniego elementu.
+        std::ranges::for_each(data.first(data.size() - 1), [&buffer, delimiter](auto&& token) {
             buffer += token + std::string(delimiter)  ;
         });
         buffer += data.back();
