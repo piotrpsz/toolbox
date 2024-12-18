@@ -242,30 +242,34 @@ namespace bee {
             auto const year = static_cast<int>(ymd.year());
             auto const month = static_cast<int>(static_cast<unsigned>(ymd.month()));
             auto const day = static_cast<int>(static_cast<unsigned>(ymd.day()));
-            date_t const dt{year, month, day};
 
             date::hh_mm_ss const hms{tp_.get_local_time() - days};
-            auto hour = static_cast<int>(hms.hours().count());
-            auto min = static_cast<int>(hms.minutes().count());
-            auto sec = static_cast<int>(hms.seconds().count());
-            time_t const tm{hour, min, sec};
+            auto const hour = static_cast<int>(hms.hours().count());
+            auto const min = static_cast<int>(hms.minutes().count());
+            auto const sec = static_cast<int>(hms.seconds().count());
 
-            return {dt, tm};
+            return {{year, month, day}, {hour, min, sec}};
         }
 
-        /// Utworzenie nowej data-czasu przez dodanie wskazanej liczby dni.
-        /// \param n - liczba dnie do dodania (może być ujemna)
-        /// \return Nowa data-czas
-        [[nodiscard]] datime add_days(int const n) const noexcept {
-            namespace chrono = std::chrono;
-            auto const days = date::floor<chrono::days>(tp_.get_local_time());
-            date::hh_mm_ss const hms{tp_.get_local_time() - days};
-            auto const added = days + chrono::days(n);
-            auto const secs = chrono::floor<chrono::seconds>(added)
-                    + hms.hours()
-                    + hms.minutes()
-                    + hms.seconds();
-            return datime(make_zoned(zone, secs));
+        /// Nowa data-czas po dodaniu wskazanej liczby lat.
+        [[nodiscard]] datime add_year(int const years_number) const {
+            auto [dt, tm] = components();
+            dt.y += years_number;
+            return datime(from_components(dt, tm));
+        }
+
+        /// Nowa data-czas po dodaniu wskazanej liczby miesięcy.
+        [[nodiscard]] datime add_month(int const months_number) const {
+            auto [dt, tm] = components();
+            dt.m += months_number;
+            return datime(from_components(dt, tm));
+        }
+
+        /// Nowa data-czas po dodaniu wskazanej liczby dni.
+        [[nodiscard]] datime add_days(int const days_number) const noexcept {
+            auto [dt, tm] = components();
+            dt.d += days_number;
+            return datime(from_components(dt, tm));
         }
 
         /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby godzin.
