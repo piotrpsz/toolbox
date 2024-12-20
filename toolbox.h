@@ -114,19 +114,19 @@ namespace bee {
                 offset = 1;
             }
 
-            auto comma_idx = 3 - (point_idx - offset) % 3;
-            if (comma_idx == 3) comma_idx = 0;
+            auto separator_idx = 3 - (point_idx - offset) % 3;
+            if (separator_idx == 3) separator_idx = 0;
 
             for (auto i = offset; i < point_idx; ++i) {
-                if (comma_idx == 3) {
+                if (separator_idx == 3) {
                     buffer.push_back(separator);
-                    comma_idx = 0;
+                    separator_idx = 0;
                 }
-                ++comma_idx;
+                ++separator_idx;
                 buffer.push_back(text[i]);
             }
 
-            // Dodajemy kropkę dziesiętną i cyfry po kropce.
+            // Dodajemy przecinek i cyfry po przecinku.
             buffer.push_back(point);
             std::ranges::copy_n(text.begin() + point_idx + 1, n, std::back_inserter(buffer));
 
