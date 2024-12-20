@@ -23,6 +23,8 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
+#include <pwd.h>        // getpwuid
+#include <unistd.h>     // getuid
 #include <string>
 #include <vector>
 #include <concepts>
@@ -31,6 +33,9 @@
 #include <format>
 #include <span>
 #include <sstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace bee {
 
@@ -39,6 +44,13 @@ namespace bee {
         static constexpr auto THOUSAND_SEPARATOR = '.';
         static constexpr auto DIGITS_AFTER_DECIMAL_POINT = 2;
     public:
+
+        /// Zamiana wzystkich znaków tekstu na małe litery.
+        static std::string to_lower(std::string_view const sv) {
+            return sv
+                | std::views::transform([](auto ch) { return tolower(ch); })
+                | std::ranges::to<std::string>();
+        };
 
         /// Konwersja tekstu z liczbą całkowitą na liczbę.
         /// \param sv View tekstu zawierającego liczbę,
@@ -205,6 +217,12 @@ namespace bee {
         /// \return Wektor losowych bajtów.
         static auto random_bytes(int n) noexcept
         -> std::vector<unsigned char>;
+
+        /// Wyznaczenie katalogu domowego aktualnego użytkownika.
+        static std::string home_dir();
+
+        /// Utworzenie wszystkich katalogów pośrednich, włącznie z ostatnim.
+        static bool create_dirs(std::string_view path);
 
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
         /// Usage: testowanie funkcji add()\n

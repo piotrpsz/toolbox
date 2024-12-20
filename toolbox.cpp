@@ -135,6 +135,11 @@ namespace bee {
         return buffer;
     }
 
+    /****************************************************************
+    *                                                               *
+    *                b y t e s _ t o _ s t r i n g                  *
+    *                                                               *
+    ****************************************************************/
 
     auto box::bytes_to_string(
         std::span<unsigned char> const data,
@@ -152,6 +157,12 @@ namespace bee {
         return join(elements, ", ");
     }
 
+    /****************************************************************
+    *                                                               *
+    *                    r a n d o m _ b y t e s                    *
+    *                                                               *
+    ****************************************************************/
+
     auto box::random_bytes(int const n) noexcept
     -> std::vector<unsigned char>
     {
@@ -167,4 +178,35 @@ namespace bee {
                 | std::views::transform([&](auto _) { return static_cast<unsigned char>(ud(mtgen)); })
                 | std::ranges::to<std::vector>();
     }
+
+    /****************************************************************
+    *                                                               *
+    *                       h o m e _ d i r                         *
+    *                                                               *
+    ****************************************************************/
+
+    std::string box::home_dir() {
+        if (auto const pw = getpwuid(getuid()))
+            return pw->pw_dir;
+        return {};
+    }
+
+    /****************************************************************
+    *                                                               *
+    *                    c r e a t e _ d i r s                      *
+    *                                                               *
+    ****************************************************************/
+
+    bool box::create_dirs(std::string_view const path) {
+        if (fs::exists(path))
+            return true;
+
+        std::error_code ec{};
+        if (fs::create_directories(path, ec))
+            return true;
+
+        std::println(stderr, "{}\n", ec.message());;
+        return {};
+    }
+
 }
