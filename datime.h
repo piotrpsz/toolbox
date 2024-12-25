@@ -31,7 +31,7 @@
 
 namespace bee {
     using ZonedTime = date::zoned_time<std::chrono::seconds>;
-
+    namespace sc = std::chrono;
 
     struct date_t {
         int y{}, m{}, d{};
@@ -70,14 +70,14 @@ namespace bee {
     public:
         /// Data-czas teraz (now).
         datime() {
-            auto const now = std::chrono::system_clock::now();
-            tp_ = date::zoned_time(zone, std::chrono::floor<std::chrono::seconds>(now));
+            auto const now = sc::system_clock::now();
+            tp_ = date::zoned_time(zone, sc::floor<std::chrono::seconds>(now));
         }
         /// \brief Data-czas z 'timestamp' (liczba sekund od początku epoki).
         /// \param timestamp Liczba sekund od początku epoki.
         explicit datime(int const timestamp) {
-            auto const tp = std::chrono::system_clock::from_time_t(timestamp);
-            tp_ = date::make_zoned(zone, std::chrono::floor<std::chrono::seconds>(tp));
+            auto const tp = sc::system_clock::from_time_t(timestamp);
+            tp_ = date::make_zoned(zone, sc::floor<std::chrono::seconds>(tp));
         }
 
         explicit datime(ZonedTime const tp) : tp_{tp} {}
@@ -86,9 +86,9 @@ namespace bee {
         /// \param str - string z datą i godziną
         explicit datime(std::string const& str) {
             std::stringstream ss{str};
-            date::local_time<std::chrono::seconds> tmp;
-            date::from_stream(ss, "%F %X", tmp);
-            tp_ = make_zoned(zone, tmp);
+            date::local_time<sc::seconds> tp;
+            from_stream(ss, "%F %X", tp);
+            tp_ = make_zoned(zone, tp);
         }
 
         /// Data-czas z komponentów.
@@ -127,13 +127,53 @@ namespace bee {
             return timestamp() > rhs.timestamp();
         }
 
+        /// Zwraca różnicę jako liczbę lat.
+        /// \return Liczba (uint) lat pomiedzy punktami-w-czasie.\n
+        /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
+        [[nodiscard]] uint years_from(datime const& rhs) const noexcept {
+            auto const a = sc::floor<sc::years>(tp_.get_sys_time());
+            auto const b = sc::floor<sc::years>(rhs.tp_.get_sys_time());
+            auto const diff = (a < b) ? (b - a).count() : (a - b).count();
+            return static_cast<uint>(diff);
+        }
+
+        /// Zwraca różnicę jako liczbę miesięcy.
+        /// \return Liczba (uint) miesięcy pomiedzy punktami-w-czasie.\n
+        /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
+        [[nodiscard]] uint months_from(datime const& rhs) const noexcept {
+            auto const a = sc::floor<sc::months>(tp_.get_sys_time());
+            auto const b = sc::floor<sc::months>(rhs.tp_.get_sys_time());
+            auto const diff = (a < b) ? (b - a).count() : (a - b).count();
+            return static_cast<uint>(diff);
+        }
+
+        /// Zwraca różnicę jako liczbę dni.
+        /// \return Liczba (uint) dni pomiedzy punktami-w-czasie.\n
+        /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
+        [[nodiscard]] uint days_from(datime const& rhs) const noexcept {
+            auto const a = sc::floor<sc::days>(tp_.get_sys_time());
+            auto const b = sc::floor<sc::days>(rhs.tp_.get_sys_time());
+            auto const diff = (a < b) ? (b - a).count() : (a - b).count();
+            return static_cast<uint>(diff);
+        }
+
+        /// Zwraca różnicę jako liczbę godzin.
+        /// \return Liczba (uint) godzin pomiedzy punktami-w-czasie.\n
+        /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
+        [[nodiscard]] uint hours_from(datime const& rhs) const noexcept {
+            auto const a = sc::floor<sc::hours>(tp_.get_sys_time());
+            auto const b = sc::floor<sc::hours>(rhs.tp_.get_sys_time());
+            auto const diff = (a < b) ? (b - a).count() : (a - b).count();
+            return static_cast<uint>(diff);
+        }
+
         /// Zwraca różnicę jako liczbę minut.
         /// \return Liczba (uint) minut pomiedzy punktami-w-czasie.\n
         /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
         [[nodiscard]]
         uint minutes_from(datime const& rhs) const noexcept {
-            auto const a = date::floor<std::chrono::minutes>(tp_.get_sys_time());
-            auto const b = date::floor<std::chrono::minutes>(rhs.tp_.get_sys_time());
+            auto const a = sc::floor<sc::minutes>(tp_.get_sys_time());
+            auto const b = sc::floor<sc::minutes>(rhs.tp_.get_sys_time());
             auto const diff = (a < b) ? (b - a).count() : (a - b).count();
             return static_cast<uint>(diff);
         }
@@ -143,8 +183,8 @@ namespace bee {
         /// Wartość zawsze dodatnia bez względu na czasową kolejność punktów-w-czasie.
         [[nodiscard]]
         uint seconds_from(datime const& rhs) const noexcept {
-            auto const a = date::floor<std::chrono::seconds>(tp_.get_sys_time());
-            auto const b = date::floor<std::chrono::seconds>(rhs.tp_.get_sys_time());
+            auto const a = sc::floor<sc::seconds>(tp_.get_sys_time());
+            auto const b = sc::floor<sc::seconds>(rhs.tp_.get_sys_time());
             auto const diff = (a < b) ? (b - a).count() : (a - b).count();
             return static_cast<uint>(diff);
         }
@@ -158,36 +198,35 @@ namespace bee {
 
         /// Zmiana czasu na podany, data pozostaje bez zmien.
         datime& set_time(time_t const tm) noexcept {
-            namespace chrono = std::chrono;
-            const auto t = date::floor<chrono::days>(tp_.get_local_time())
-                    + chrono::hours(tm.h)
-                    + chrono::minutes(tm.m)
-                    + chrono::seconds(tm.s);
-            tp_ = make_zoned(zone, t);
+            const auto tp
+                = sc::floor<sc::days>(tp_.get_local_time())
+                + sc::hours(tm.h)
+                + sc::minutes(tm.m)
+                + sc::seconds(tm.s);
+            tp_ = make_zoned(zone, tp);
             return *this;
         }
 
         /// Wyzerowanie sekund z ewentualnym zaokrągleniem minut.
         datime& clear_seconds() noexcept {
-            namespace chrono = std::chrono;
-            auto const days = date::floor<chrono::days>(tp_.get_local_time());
-            date::hh_mm_ss hms{tp_.get_local_time() - days};
-            const auto t = date::floor<chrono::days>(tp_.get_local_time())
-                    + hms.hours()
-                    + hms.minutes()
-                    + chrono::seconds(hms.seconds().count() >= 30 ? 60 : 0);
-            tp_ = make_zoned(zone, t);
+            auto const days = date::floor<sc::days>(tp_.get_local_time());
+            date::hh_mm_ss const hms{tp_.get_local_time() - days};
+            const auto tp
+                = days
+                + hms.hours()
+                + hms.minutes()
+                + sc::seconds(hms.seconds().count() >= 30 ? 60 : 0);
+            tp_ = make_zoned(zone, tp);
             return *this;
         }
 
         /// Wyzerowanie czasu.
         datime& clear_time() noexcept {
-            namespace chrono = std::chrono;
-            auto t = date::floor<chrono::days>(tp_.get_local_time())
-                    + chrono::hours(0)
-                    + chrono::minutes(0)
-                    + chrono::seconds(0);
-            tp_ = make_zoned(zone, t);
+            auto tp = date::floor<sc::days>(tp_.get_local_time())
+                    + sc::hours(0)
+                    + sc::minutes(0)
+                    + sc::seconds(0);
+            tp_ = make_zoned(zone, tp);
             return *this;
         }
 
@@ -228,9 +267,9 @@ namespace bee {
             namespace chrono = std::chrono;
             auto const days = date::floor<chrono::days>(tp_.get_local_time());
             date::hh_mm_ss const hms{tp_.get_local_time() - days};
-            auto hour = static_cast<int>(hms.hours().count());
-            auto min = static_cast<int>(hms.minutes().count());
-            auto sec = static_cast<int>(hms.seconds().count());
+            auto const hour = static_cast<int>(hms.hours().count());
+            auto const min = static_cast<int>(hms.minutes().count());
+            auto const sec = static_cast<int>(hms.seconds().count());
             return {hour, min, sec};
         }
         /// Wyznaczenie składników daty i czasu.
@@ -253,59 +292,56 @@ namespace bee {
 
         /// Nowa data-czas po dodaniu wskazanej liczby lat.
         [[nodiscard]] datime add_year(int const years_number) const {
-            auto [dt, tm] = components();
-            dt.y += years_number;
-            return datime(from_components(dt, tm));
+            namespace sc = std::chrono;
+            auto const tp
+                = sc::floor<std::chrono::seconds>(tp_.get_local_time())
+                + sc::years(years_number);
+            return datime(date::make_zoned(zone, sc::floor<sc::seconds>(tp)));
         }
 
         /// Nowa data-czas po dodaniu wskazanej liczby miesięcy.
-        [[nodiscard]] datime add_month(int const months_number) const {
-            auto [dt, tm] = components();
-            dt.m += months_number;
-            return datime(from_components(dt, tm));
+        [[nodiscard]] datime add_month(int const n) const {
+            namespace sc = std::chrono;
+            auto const tp
+                = sc::floor<std::chrono::seconds>(tp_.get_local_time())
+                + sc::months(n);
+            return datime(date::make_zoned(zone, sc::floor<sc::seconds>(tp)));
         }
 
         /// Nowa data-czas po dodaniu wskazanej liczby dni.
-        [[nodiscard]] datime add_days(int const days_number) const noexcept {
-            auto [dt, tm] = components();
-            dt.d += days_number;
-            return datime(from_components(dt, tm));
+        [[nodiscard]] datime add_days(int const n) const noexcept {
+            namespace sc = std::chrono;
+            auto const tp
+                = sc::floor<std::chrono::seconds>(tp_.get_local_time())
+                + sc::days(n);
+            return datime(date::make_zoned(zone, sc::floor<sc::seconds>(tp)));
         }
 
         /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby godzin.
-        [[nodiscard]] datime add_hours(int const hrs) const noexcept {
-            namespace chrono = std::chrono;
-            const auto days = chrono::floor<chrono::days>(tp_.get_local_time());
-            date::hh_mm_ss const hms{tp_.get_local_time() - days};
-            auto const secs = chrono::floor<chrono::seconds>(days)
-                    + (hms.hours() + chrono::hours(hrs))
-                    + hms.minutes()
-                    + hms.seconds();
-            return datime(make_zoned(zone, secs));
+        [[nodiscard]] datime add_hours(int const n) const noexcept {
+            namespace sc = std::chrono;
+            auto const tp
+                = sc::floor<std::chrono::seconds>(tp_.get_local_time())
+                + sc::hours(n);
+            return datime(date::make_zoned(zone, sc::floor<sc::seconds>(tp)));
         }
 
         /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby minut.
-        [[nodiscard]] datime add_minutes(int const min) const noexcept {
-            namespace chrono = std::chrono;
-            const auto days = chrono::floor<chrono::days>(tp_.get_local_time());
-            date::hh_mm_ss const hms{tp_.get_local_time() - days};
-            auto const secs = chrono::floor<chrono::seconds>(days)
-                    + hms.hours()
-                    + (hms.minutes() + chrono::minutes(min))
-                    + hms.seconds();
-            return datime(make_zoned(zone, secs));
+        [[nodiscard]] datime add_minutes(int const n) const noexcept {
+            namespace sc = std::chrono;
+            auto const tp
+                = sc::floor<std::chrono::seconds>(tp_.get_local_time())
+                + sc::minutes(n);
+            return datime(date::make_zoned(zone, sc::floor<sc::seconds>(tp)));
         }
 
         /// Utworzenie nowego obiektu 'datime' przez dodanie wskazanej liczby sekond.
-        [[nodiscard]] datime add_seconds(int const sec) const noexcept {
-            namespace chrono = std::chrono;
-            const auto days = chrono::floor<chrono::days>(tp_.get_local_time());
-            date::hh_mm_ss const hms{tp_.get_local_time() - days};
-            auto const secs = chrono::floor<chrono::seconds>(days)
-                    + hms.hours()
-                    + hms.minutes()
-                    + (hms.seconds() + chrono::seconds(sec));
-            return datime(make_zoned(zone, secs));
+        [[nodiscard]] datime add_seconds(int const n) const noexcept {
+            namespace sc = std::chrono;
+            auto const tp
+                = sc::floor<std::chrono::seconds>(tp_.get_local_time())
+                + sc::seconds(n);
+            return datime(date::make_zoned(zone, sc::floor<sc::seconds>(tp)));
         }
 
         /// Nowa data oznaczjąca dzień następny.
@@ -324,8 +360,7 @@ namespace bee {
         /// Poniedziałek: 1 ... Niedziela: 7
         [[nodiscard]]
         uint week_day() const noexcept {
-            namespace chrono = std::chrono;
-            auto const wd = date::weekday(chrono::floor<chrono::days>(tp_.get_local_time()));
+            auto const wd = date::weekday(sc::floor<sc::days>(tp_.get_local_time()));
             return wd.iso_encoding();
         }
 
@@ -353,13 +388,12 @@ namespace bee {
         /// \return Lokalny punkt-w-czasie.
         [[nodiscard]]
         ZonedTime from_components(date_t const dt, time_t const tm) const noexcept {
-            namespace chrono = std::chrono;
             date::year_month_day const ymd = date::year(dt.y) / dt.m / dt.d;
             auto const days = static_cast<date::local_days>(ymd);
             const auto t = days
-                + chrono::hours(tm.h)
-                + chrono::minutes(tm.m)
-                + chrono::seconds(tm.s);
+                + sc::hours(tm.h)
+                + sc::minutes(tm.m)
+                + sc::seconds(tm.s);
             return make_zoned(zone, t);
         }
     };
