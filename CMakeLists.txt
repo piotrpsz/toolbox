@@ -9,6 +9,12 @@ add_library(toolbox STATIC
         toolbox.cpp toolbox.h
         datime.h
         all.h
+        crypto/blowfish/data.h
+        types.h
+        crypto/blowfish/blowfish.cpp
+        crypto/blowfish/blowfish.h
+        crypto/crypto.cpp
+        crypto/crypto.h
 )
 
 target_include_directories(toolbox PUBLIC date)

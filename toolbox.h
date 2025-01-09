@@ -32,7 +32,6 @@
 #include <ranges>
 #include <format>
 #include <span>
-#include <sstream>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -45,11 +44,20 @@ namespace bee {
         static constexpr auto DIGITS_AFTER_DECIMAL_POINT = 2;
     public:
 
-        /// Zamiana wzystkich znaków tekstu na małe litery.
+        /// Zamiana wszystkich znaków tekstu na małe litery.
         static std::string to_lower(std::string_view const sv) {
-            return sv
-                | std::views::transform([](auto ch) { return tolower(ch); })
-                | std::ranges::to<std::string>();
+            std::string buffer;
+            buffer.reserve(sv.size());
+            for (auto const ch : sv) {
+                auto const c = std::tolower(ch);
+                buffer.push_back(static_cast<char>(c));
+            }
+            return buffer;
+
+            // problem with 'to<>'
+            // return sv
+            //     | std::views::transform([](auto ch) { return tolower(ch); })
+            //     | std::ranges::to<std::string>();
         };
 
         /// Konwersja tekstu z liczbą całkowitą na liczbę.
@@ -215,7 +223,7 @@ namespace bee {
         /// Utworzenie wektora losowych bajtów.
         /// \param n - oczekiwana liczba bajtów.
         /// \return Wektor losowych bajtów.
-        static auto random_bytes(int n) noexcept
+        static auto random_bytes(size_t n) noexcept
         -> std::vector<unsigned char>;
 
         /// Wyznaczenie katalogu domowego aktualnego użytkownika.

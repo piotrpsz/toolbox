@@ -23,9 +23,12 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "toolbox.h"
+#include <iostream>
 #include <numeric>
 #include <random>
 #include <charconv>
+#include <format>
+#include <span>
 
 namespace bee {
 
@@ -46,9 +49,9 @@ namespace bee {
 
         // Coś poszło nie tak.
         if (ec == std::errc::invalid_argument)
-            std::println(stderr, "This is not a number ({}).\n", sv);
+            std::cerr << std::format("This is not a number ({}).\n", sv);
         else if (ec == std::errc::result_out_of_range)
-            std::println(stderr, "The number is to big ({}).\n", sv);
+            std::cerr << std::format("The number is to big ({}).\n", sv);
         return {};
     }
 
@@ -64,10 +67,20 @@ namespace bee {
         int const n) noexcept
     -> std::string
     {
-        return bytes
-            | std::views::transform([] (unsigned char const c) { return static_cast<char>(c); })
-            | std::views::take(n)
-            | std::ranges::to<std::string>();
+        std::string buffer;
+        buffer.reserve(bytes.size());
+        if (bytes.size() > n)
+            bytes = bytes.subspan(0, n);
+
+        for (auto const v : bytes)
+            buffer.push_back(static_cast<char>(v));
+        return buffer;
+
+        // Problem with 'to<>'
+        // return bytes
+        //     | std::views::transform([] (unsigned char const c) { return static_cast<char>(c); })
+        //     | std::views::take(n)
+        //     | std::ranges::to<std::string>();
     }
 
     /****************************************************************
@@ -150,9 +163,15 @@ namespace bee {
             return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
         };
 
-        auto elements = data
-            | std::views::transform([&](auto const ch) { return fmt(ch); })
-            | std::ranges::to<std::vector>();
+        std::vector<std::string> elements{};
+        elements.reserve(data.size());
+        for (auto const ch : data)
+            elements.push_back(fmt(ch));
+
+        // Problem 'to<>'
+        // auto elements = data
+        //     | std::views::transform([&](auto const ch) { return fmt(ch); })
+        //     | std::ranges::to<std::vector>();
 
         return join(elements, ", ");
     }
@@ -163,7 +182,7 @@ namespace bee {
     *                                                               *
     ****************************************************************/
 
-    auto box::random_bytes(int const n) noexcept
+    auto box::random_bytes(size_t const n) noexcept
     -> std::vector<unsigned char>
     {
         std::random_device rd;
@@ -171,12 +190,21 @@ namespace bee {
         std::ranges::generate(seed_data, ref(rd));
         std::seed_seq seq(begin(seed_data), end(seed_data));
 
-        auto mtgen = std::mt19937{seq};
+        auto mersenne_twister_engine = std::mt19937{seq};
         auto ud = std::uniform_int_distribution<>{0, 255};
 
-        return std::views::iota(0, n)
-                | std::views::transform([&](auto _) { return static_cast<unsigned char>(ud(mtgen)); })
-                | std::ranges::to<std::vector>();
+        std::vector<unsigned char> buffer;
+        buffer.reserve(n);
+        for (auto i = 0; i < n; ++i) {
+            auto const c = ud(mersenne_twister_engine);
+            buffer.push_back(static_cast<unsigned char>(c));
+        }
+        return buffer;
+
+        // Problem 'to<>'
+        // return std::views::iota(0, n)
+        //         | std::views::transform([&](auto _) { return static_cast<unsigned char>(ud(mersenne_twister_engine)); })
+        //         | std::ranges::to<std::vector>();
     }
 
     /****************************************************************
@@ -205,7 +233,7 @@ namespace bee {
         if (fs::create_directories(path, ec))
             return true;
 
-        std::println(stderr, "{}\n", ec.message());;
+        std::cerr << std::format("{}\n", ec.message());;
         return {};
     }
 
