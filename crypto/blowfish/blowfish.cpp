@@ -60,7 +60,7 @@ namespace bee::crypto {
     }
 
     Blowfish::~Blowfish() {
-        crypto::clear_bytes(p, (RoundCount+2) * sizeof(u32));
+        crypto::clear_bytes(p, (ROUND_COUNT+2) * sizeof(u32));
         crypto::clear_bytes(s[0], 256 * sizeof(u32));
         crypto::clear_bytes(s[1], 256 * sizeof(u32));
         crypto::clear_bytes(s[2], 256 * sizeof(u32));
