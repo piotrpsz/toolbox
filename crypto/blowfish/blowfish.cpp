@@ -63,11 +63,11 @@ namespace bee::crypto {
     }
 
     Blowfish::~Blowfish() {
-        crypto::clear_bytes(p, (ROUND_COUNT+2) * sizeof(u32));
-        crypto::clear_bytes(s[0], 256 * sizeof(u32));
-        crypto::clear_bytes(s[1], 256 * sizeof(u32));
-        crypto::clear_bytes(s[2], 256 * sizeof(u32));
-        crypto::clear_bytes(s[3], 256 * sizeof(u32));
+        clear_bytes(p, (ROUND_COUNT+2) * sizeof(u32));
+        clear_bytes(s[0], 256 * sizeof(u32));
+        clear_bytes(s[1], 256 * sizeof(u32));
+        clear_bytes(s[2], 256 * sizeof(u32));
+        clear_bytes(s[3], 256 * sizeof(u32));
     }
 
 
@@ -133,35 +133,6 @@ namespace bee::crypto {
     ****************************************************************/
 
     void Blowfish::decrypt_block(u32 const* const src, u32* const dst) const noexcept {
-        // u32  temp;
-        // short       i;
-        // auto N = 16;
-        //
-        // u32 xl = src[0];
-        // u32 xr = src[1];
-        // auto Xl = &xl;
-        // auto Xr = &xr;
-        //
-        // for (i = 0; i < N; ++i) {
-        //     xl = xl ^ p[i];
-        //     xr = f(xl) ^ xr;
-        //
-        //     temp = xl;
-        //     xl = xr;
-        //     xr = temp;
-        // }
-        //
-        // temp = xl;
-        // xl = xr;
-        // xr = temp;
-        //
-        // xr = xr ^ p[N];
-        // xl = xl ^ p[N + 1];
-        //
-        // dst[0] = xl;
-        // dst[1] = xr;
-        //
-        // return;
         u32 xl = src[0];
         u32 xr = src[1];
 
@@ -229,7 +200,7 @@ namespace bee::crypto {
         // Bufor z jawnymi danymi.
         std::vector<u8> plain{ptr, ptr + nbytes};
         auto size = plain.size();
-        if (auto n = size % BLOCK_SIZE) {
+        if (size % BLOCK_SIZE) {
             auto const blocks = (size / BLOCK_SIZE) + 1;
             plain.resize(blocks * BLOCK_SIZE, 0);
             plain[size] = 128;      // marker początku 'uzupełnienia'
@@ -247,7 +218,8 @@ namespace bee::crypto {
             src += 2;
             dst += 2;
         }
-        return cipher;
+
+        return std::move(cipher);
     }
 
     /****************************************************************
@@ -262,25 +234,28 @@ namespace bee::crypto {
         if (cipher == nullptr || nbytes == 0)
            return {};
 
+        // Odszyfrowany tekst ma długość zaszyfrowanego tekstu.
         std::vector<u8> plain(nbytes, 0);
 
+        // Odszyfrowanie
         auto src = static_cast<u32 const*>(cipher);
         auto dst = reinterpret_cast<u32*>(plain.data());
-
         for (int i = 0; i < (nbytes/BLOCK_SIZE); ++i) {
             decrypt_block(src, dst);
             src += 2;
             dst += 2;
         }
 
+        // Obcięcie 'ogona'.
         if (int const idx = padding_index(plain.data(), static_cast<int>(nbytes)); idx != -1)
             plain.resize(idx);
-        return plain;
+
+        return std::move(plain);
     }
 
     /****************************************************************
     *                                                               *
-    *                   d e c r y p t _ c b c                       *
+    *                   e n c r y p t _ c b c                       *
     *                                                               *
     ****************************************************************/
 
@@ -290,11 +265,6 @@ namespace bee::crypto {
         if (!data || nbytes == 0)
             return {};
 
-        // std::vector<u8> ivec;
-        // if (!iv) ivec = box::random_bytes(BLOCK_SIZE);
-        // else ivec = std::vector<u8>(BLOCK_SIZE, 0);
-        // std::cout << std::format("I: {}\n", box::bytes_to_string(ivec, true));
-
         // Z wykorzystaniem przysłanego wskaźnika tworzymy wektor bajtów.
         // Jeśli rozmiar danych nie jest wielokrotnością 'bloku' to dodajemy 'padding',
         // aby dane do szyfrowania faktycznie miały rozmiar o wielokrotności 'bloku'.
@@ -303,7 +273,7 @@ namespace bee::crypto {
         // Bufor z jawnymi danymi.
         std::vector<u8> plain{ptr, ptr + nbytes};
         auto size = plain.size();
-        if (auto n = size % BLOCK_SIZE) {
+        if (size % BLOCK_SIZE) {
             auto const blocks = (size / BLOCK_SIZE) + 1;
             plain.resize(blocks * BLOCK_SIZE, 0);
             plain[size] = 128;      // marker początku 'uzupełnienia'
@@ -317,6 +287,7 @@ namespace bee::crypto {
             std::memcpy(cipher.data(), iv, BLOCK_SIZE);
         else
             std::memcpy(cipher.data(), box::random_bytes(BLOCK_SIZE).data(), BLOCK_SIZE);
+
         std::cout << std::format("I: {}\n", box::bytes_to_string(cipher, BLOCK_SIZE, true));
 
 
@@ -331,8 +302,40 @@ namespace bee::crypto {
             encrypt_block(tmp, dst);
             src += 2;
         }
-        // std::cout << std::format("Blokcs: {}, Bytes: {}\n", cipher.size()/BLOCK_SIZE, cipher.size());
         return std::move(cipher);
     }
 
+    /****************************************************************
+    *                                                               *
+    *                   d e c r y p t _ c b c                       *
+    *                                                               *
+    ****************************************************************/
+
+    auto Blowfish::decrypt_cbc(void const* const cipher, size_t nbytes) const noexcept
+    -> std::vector<u8>
+    {
+        if (!cipher || nbytes == 0)
+            return {};
+
+        // Odszyfrowany tekst jest krótszy o blok IV.
+        nbytes -= BLOCK_SIZE;
+        std::vector<u8> plain(nbytes, 0);
+
+        // Odszyfrowanie.
+        auto src = static_cast<u32 const*>(cipher);
+        auto dst = reinterpret_cast<u32*>(plain.data());
+        for (int i = 0; i < (nbytes/BLOCK_SIZE); ++i) {
+            decrypt_block(src + 2, dst);
+            dst[0] = dst[0] ^ src[0];
+            dst[1] = dst[1] ^ src[1];
+            src += 2;
+            dst += 2;
+        }
+
+        // Obcięcie 'ogona'.
+        if (int const idx = padding_index(plain.data(), static_cast<int>(nbytes)); idx != -1)
+            plain.resize(idx);
+
+        return std::move(plain);
+    }
 }

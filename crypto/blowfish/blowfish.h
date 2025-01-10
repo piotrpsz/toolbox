@@ -34,12 +34,12 @@ namespace bee::crypto {
         auto encrypt_cbc(void const*, size_t, void const* = nullptr) const noexcept
         -> std::vector<u8>;
 
-        auto decrypt_cbc(const void*, size_t) const noexcept
-        -> std::pair<std::shared_ptr<void>, size_t>;
+        auto decrypt_cbc(void const*, size_t) const noexcept
+        -> std::vector<u8>;
 
-
-
-
+        static auto key_min_size() noexcept { return KEY_MINSIZE; }
+        static auto key_max_size() noexcept { return KEY_MAXSIZE; }
+        static auto block_size() noexcept { return BLOCK_SIZE; }
 
     private:
         [[nodiscard]] u32 f(u32 x) const noexcept {
