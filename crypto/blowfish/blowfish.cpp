@@ -33,28 +33,28 @@ namespace bee::crypto {
             for (int j = 0; j < 4; j++) {
                 d = (d << 8) | static_cast<u32>(key[k]);
                 ++k;
-                if (k >= key_size) {
+                if (k >= key_size)
                     k = 0;
-                }
             }
             p[i] = orgp[i] ^ d;
         }
 
 
         // P
-        u32 data[2] = {0, 0};
+        u32 src[2]{0, 0};
+        u32 dst[2]{0, 0};
         for (int i = 0; i < (ROUND_COUNT + 2); i += 2) {
-            encrypt_block(data, data);
-            p[i] = data[0];
-            p[i+1] = data[1];
+            encrypt_block(src, dst);
+            p[i] = src[0] = dst[0];
+            p[i+1] = src[1] = dst[1];
         }
 
         // S
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 256; j += 2) {
-                encrypt_block(data, data);
-                s[i][j] = data[0];
-                s[i][j+1] = data[1];
+                encrypt_block(src, dst);
+                s[i][j] = src[0] = dst[0];
+                s[i][j+1] = src[1] = dst[1];
             }
         }
     }
@@ -78,41 +78,42 @@ namespace bee::crypto {
         u32 xl = src[0];
         u32 xr = src[1];
 
+        // 0
         xl = xl ^ p[0];
         xr = f(xl) ^ xr;
         xr = xr ^ p[1];
         xl = f(xr) ^ xl;
-
+        // 1
         xl = xl ^ p[2];
         xr = f(xl) ^ xr;
         xr = xr ^ p[3];
         xl = f(xr) ^ xl;
-
+        // 2
         xl = xl ^ p[4];
         xr = f(xl) ^ xr;
         xr = xr ^ p[5];
         xl = f(xr) ^ xl;
-
+        // 3
         xl = xl ^ p[6];
         xr = f(xl) ^ xr;
         xr = xr ^ p[7];
         xl = f(xr) ^ xl;
-
+        // 4
         xl = xl ^ p[8];
         xr = f(xl) ^ xr;
         xr = xr ^ p[9];
         xl = f(xr) ^ xl;
-
+        // 5
         xl = xl ^ p[10];
         xr = f(xl) ^ xr;
         xr = xr ^ p[11];
         xl = f(xr) ^ xl;
-
+        // 6
         xl = xl ^ p[12];
         xr = f(xl) ^ xr;
         xr = xr ^ p[13];
         xl = f(xr) ^ xl;
-
+        // 7
         xl = xl ^ p[14];
         xr = f(xl) ^ xr;
         xr = xr ^ p[15];
@@ -129,6 +130,35 @@ namespace bee::crypto {
     ****************************************************************/
 
     void Blowfish::decrypt_block(u32 const* const src, u32* const dst) const noexcept {
+        // u32  temp;
+        // short       i;
+        // auto N = 16;
+        //
+        // u32 xl = src[0];
+        // u32 xr = src[1];
+        // auto Xl = &xl;
+        // auto Xr = &xr;
+        //
+        // for (i = 0; i < N; ++i) {
+        //     xl = xl ^ p[i];
+        //     xr = f(xl) ^ xr;
+        //
+        //     temp = xl;
+        //     xl = xr;
+        //     xr = temp;
+        // }
+        //
+        // temp = xl;
+        // xl = xr;
+        // xr = temp;
+        //
+        // xr = xr ^ p[N];
+        // xl = xl ^ p[N + 1];
+        //
+        // dst[0] = xl;
+        // dst[1] = xr;
+        //
+        // return;
         u32 xl = src[0];
         u32 xr = src[1];
 

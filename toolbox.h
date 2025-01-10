@@ -23,6 +23,7 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
+#include "types.h"
 #include <pwd.h>        // getpwuid
 #include <unistd.h>     // getuid
 #include <string>
