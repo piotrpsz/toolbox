@@ -7,6 +7,9 @@
 #include "../crypto.h"
 #include <vector>
 #include <iostream>
+#include <cstring>  // for std::memcpy
+
+#include "../../toolbox.h"
 
 namespace bee::crypto {
 
@@ -273,6 +276,57 @@ namespace bee::crypto {
         if (int const idx = padding_index(plain.data(), static_cast<int>(nbytes)); idx != -1)
             plain.resize(idx);
         return plain;
+    }
+
+    /****************************************************************
+    *                                                               *
+    *                   d e c r y p t _ c b c                       *
+    *                                                               *
+    ****************************************************************/
+
+    auto Blowfish::encrypt_cbc(void const* const data, size_t const nbytes, void* const iv) const noexcept
+    -> std::vector<u8>
+    {
+        if (!data || nbytes == 0)
+            return {};
+
+        std::vector<u8> ivec;
+        if (!iv) ivec = box::random_bytes(BLOCK_SIZE);
+        else ivec = std::vector<u8>(BLOCK_SIZE, 0);
+        std::cout << std::format("I: {}\n", box::bytes_to_string(ivec, true));
+
+        // Z wykorzystaniem przysłanego wskaźnika tworzymy wektor bajtów.
+        // Jeśli rozmiar danych nie jest wielokrotnością 'bloku' to dodajemy 'padding',
+        // aby dane do szyfrowania faktycznie miały rozmiar o wielokrotności 'bloku'.
+        auto const ptr = static_cast<u8 const*>(data);
+
+        // Bufor z jawnymi danymi.
+        std::vector<u8> plain{ptr, ptr + nbytes};
+        auto size = plain.size();
+        if (auto n = size % BLOCK_SIZE) {
+            auto const blocks = (size / BLOCK_SIZE) + 1;
+            plain.resize(blocks * BLOCK_SIZE, 0);
+            plain[size] = 128;      // marker początku 'uzupełnienia'
+            size = plain.size();
+        }
+
+        // Bufor na zaszyfrowane dane (rozmiar zwiększony o IV).
+        std::vector<u8> cipher(size + BLOCK_SIZE, 0);
+        std::memcpy(cipher.data(), ivec.data(), ivec.size());
+
+        // Szyfrowanie.
+        auto src = reinterpret_cast<u32 const*>(plain.data());
+        auto dst = reinterpret_cast<u32*>(cipher.data());
+        u32 tmp[2];
+        for (int i = 0; i < (size/BLOCK_SIZE); ++i) {
+            tmp[0] = src[0] ^ dst[0];
+            tmp[1] = src[1] ^ dst[1];
+            dst += 2;
+            encrypt_block(tmp, dst);
+            src += 2;
+        }
+        // std::cout << std::format("Blokcs: {}, Bytes: {}\n", cipher.size()/BLOCK_SIZE, cipher.size());
+        return std::move(cipher);
     }
 
 }
