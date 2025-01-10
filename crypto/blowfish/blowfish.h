@@ -31,7 +31,7 @@ namespace bee::crypto {
         auto decrypt_ecb(const void*, size_t) const noexcept
         -> std::vector<u8>;
 
-        auto encrypt_cbc(void const*, size_t, void* = nullptr) const noexcept
+        auto encrypt_cbc(void const*, size_t, void const* = nullptr) const noexcept
         -> std::vector<u8>;
 
         auto decrypt_cbc(const void*, size_t) const noexcept

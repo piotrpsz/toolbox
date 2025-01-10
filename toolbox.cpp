@@ -176,6 +176,23 @@ namespace bee {
         return join(elements, ", ");
     }
 
+    auto box::bytes_to_string(
+        std::span<unsigned char> const data,
+        size_t const n,
+        bool const as_hex) noexcept
+    -> std::string
+    {
+        auto const fmt = [as_hex] (unsigned char const ch) noexcept {
+            return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
+        };
+
+        std::vector<std::string> elements{};
+        elements.reserve(n);
+        for (auto const ch : data.first(n))
+            elements.push_back(fmt(ch));
+
+        return join(elements, ", ");
+    }
     /****************************************************************
     *                                                               *
     *                    r a n d o m _ b y t e s                    *

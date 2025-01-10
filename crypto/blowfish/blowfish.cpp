@@ -284,16 +284,16 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    auto Blowfish::encrypt_cbc(void const* const data, size_t const nbytes, void* const iv) const noexcept
+    auto Blowfish::encrypt_cbc(void const* const data, size_t const nbytes, void const* const iv) const noexcept
     -> std::vector<u8>
     {
         if (!data || nbytes == 0)
             return {};
 
-        std::vector<u8> ivec;
-        if (!iv) ivec = box::random_bytes(BLOCK_SIZE);
-        else ivec = std::vector<u8>(BLOCK_SIZE, 0);
-        std::cout << std::format("I: {}\n", box::bytes_to_string(ivec, true));
+        // std::vector<u8> ivec;
+        // if (!iv) ivec = box::random_bytes(BLOCK_SIZE);
+        // else ivec = std::vector<u8>(BLOCK_SIZE, 0);
+        // std::cout << std::format("I: {}\n", box::bytes_to_string(ivec, true));
 
         // Z wykorzystaniem przysłanego wskaźnika tworzymy wektor bajtów.
         // Jeśli rozmiar danych nie jest wielokrotnością 'bloku' to dodajemy 'padding',
@@ -312,7 +312,13 @@ namespace bee::crypto {
 
         // Bufor na zaszyfrowane dane (rozmiar zwiększony o IV).
         std::vector<u8> cipher(size + BLOCK_SIZE, 0);
-        std::memcpy(cipher.data(), ivec.data(), ivec.size());
+        // Wektor IV jako pierwszy blok szyfrowanych danych.
+        if (iv)
+            std::memcpy(cipher.data(), iv, BLOCK_SIZE);
+        else
+            std::memcpy(cipher.data(), box::random_bytes(BLOCK_SIZE).data(), BLOCK_SIZE);
+        std::cout << std::format("I: {}\n", box::bytes_to_string(cipher, BLOCK_SIZE, true));
+
 
         // Szyfrowanie.
         auto src = reinterpret_cast<u32 const*>(plain.data());

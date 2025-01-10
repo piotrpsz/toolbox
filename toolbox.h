@@ -221,6 +221,12 @@ namespace bee {
             bool as_hex = false) noexcept
         -> std::string;
 
+        static auto bytes_to_string(
+            std::span<unsigned char> data,
+            size_t n,
+            bool as_hex = false) noexcept
+        -> std::string;
+
         /// Utworzenie wektora losowych bajtów.
         /// \param n - oczekiwana liczba bajtów.
         /// \return Wektor losowych bajtów.
