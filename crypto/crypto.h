@@ -5,6 +5,7 @@
 #pragma once
 #include "../types.h"
 #include "blowfish/blowfish.h"
+#include "gost/gost.h"
 
 namespace bee::crypto {
     int padding_index(u8 const*, int) noexcept;

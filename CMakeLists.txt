@@ -15,6 +15,8 @@ add_library(toolbox STATIC
         crypto/blowfish/blowfish.h
         crypto/crypto.cpp
         crypto/crypto.h
+        crypto/gost/gost.cpp
+        crypto/gost/gost.h
 )
 
 target_include_directories(toolbox PUBLIC date)
