@@ -248,6 +248,7 @@ namespace bee {
         /// Utworzenie wszystkich katalogów pośrednich, włącznie z ostatnim.
         static bool create_dirs(std::string_view path);
 
+        /// Kompresja ciągłego ciągu bajtów (kontenera).
         // https://github.com/avaneev/lzav
         static inline std::vector<char> compress(BytesContainer auto const& data) {
             auto const max_size =  lzav_compress_bound(static_cast<int>(data.size()));
@@ -257,23 +258,29 @@ namespace bee {
                 buffer.resize(comp_size);
 
             // Na początku umieszczamy 4 bajty, będące rozmiarem oryginalnego tekstu.
+            // Rozmiar ten jest potrzebny przy dekompresji.
             auto const size = static_cast<u32>(data.size());
             std::vector<char> compressed(sizeof(size) + buffer.size());
+            // dodaj oryginalny rozmiar
             std::memcpy(compressed.data(), &size, sizeof(size));
+            // dodaj skompresowane dane
             std::memcpy(compressed.data() + sizeof(size), buffer.data(), buffer.size());
+
             return std::move(compressed);
         }
 
+        /// Dekompresja ciągłego ciągu bajtów (kontenera)
         static std::vector<char> decompress(BytesContainer auto const& data) {
             // Pierwsze 4 bajty zawierają rozmiar oryginalnego tekstu.
             u32 src_size;
             std::memcpy(&src_size, data.data(), sizeof(u32));
-            std::vector<char> buffer(src_size);
 
-            auto const size = static_cast<int>(data.size() - 4);
-            auto const decomp_size = lzav_decompress(data.data() + 4, buffer.data(), size, src_size);
+            std::vector<char> buffer(src_size);
+            auto const size = static_cast<int>(data.size() - sizeof(u32));
+            auto const decomp_size = lzav_decompress(data.data() + sizeof(u32), buffer.data(), size, src_size);
             if (decomp_size < 0)
                 return {};
+
             return std::move(buffer);
         }
 
