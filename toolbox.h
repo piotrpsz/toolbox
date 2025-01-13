@@ -21,6 +21,7 @@
 // SOFTWARE.
 #pragma once
 
+
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "types.h"
@@ -34,6 +35,14 @@
 #include <format>
 #include <span>
 #include <filesystem>
+
+#include "lzav.h"
+
+template <typename T>
+concept BytesContainer = std::is_class_v<std::string> ||
+                        std::is_class_v<std::vector<char>> ||
+                        std::is_class_v<std::vector<unsigned char>>;
+
 
 namespace fs = std::filesystem;
 
@@ -238,6 +247,35 @@ namespace bee {
 
         /// Utworzenie wszystkich katalogów pośrednich, włącznie z ostatnim.
         static bool create_dirs(std::string_view path);
+
+        // https://github.com/avaneev/lzav
+        static inline std::vector<char> compress(BytesContainer auto const& data) {
+            auto const max_size =  lzav_compress_bound(static_cast<int>(data.size()));
+            std::vector<char> buffer(max_size);
+            auto const comp_size = lzav_compress_default(data.data(), buffer.data(), data.size(),max_size);
+            if (comp_size < max_size)
+                buffer.resize(comp_size);
+
+            // Na początku umieszczamy 4 bajty, będące rozmiarem oryginalnego tekstu.
+            auto const size = static_cast<u32>(data.size());
+            std::vector<char> compressed(sizeof(size) + buffer.size());
+            std::memcpy(compressed.data(), &size, sizeof(size));
+            std::memcpy(compressed.data() + sizeof(size), buffer.data(), buffer.size());
+            return std::move(compressed);
+        }
+
+        static std::vector<char> decompress(BytesContainer auto const& data) {
+            // Pierwsze 4 bajty zawierają rozmiar oryginalnego tekstu.
+            u32 src_size;
+            std::memcpy(&src_size, data.data(), sizeof(u32));
+            std::vector<char> buffer(src_size);
+
+            auto const size = static_cast<int>(data.size() - 4);
+            auto const decomp_size = lzav_decompress(data.data() + 4, buffer.data(), size, src_size);
+            if (decomp_size < 0)
+                return {};
+            return std::move(buffer);
+        }
 
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
         /// Usage: testowanie funkcji add()\n

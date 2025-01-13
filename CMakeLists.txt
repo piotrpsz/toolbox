@@ -17,6 +17,8 @@ add_library(toolbox STATIC
         crypto/crypto.h
         crypto/gost/gost.cpp
         crypto/gost/gost.h
+        file.h
+        lzav.h
 )
 
 target_include_directories(toolbox PUBLIC date)
