@@ -13,7 +13,7 @@
 
 namespace bee::crypto {
 
-    Blowfish::Blowfish(void const* const key_material, size_t const key_size)
+    blowfish::blowfish(void const* const key_material, size_t const key_size)
     {
         if (key_size < KEY_MINSIZE || key_size > KEY_MAXSIZE) {
             std::cerr << "Error (blowfish): invalid key size\n";
@@ -62,7 +62,7 @@ namespace bee::crypto {
         }
     }
 
-    Blowfish::~Blowfish() {
+    blowfish::~blowfish() {
         clear_bytes(p, (ROUND_COUNT+2) * sizeof(u32));
         clear_bytes(s[0], 256 * sizeof(u32));
         clear_bytes(s[1], 256 * sizeof(u32));
@@ -77,7 +77,7 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    void Blowfish::encrypt_block(u32 const* const src, u32* const dst) const noexcept {
+    void blowfish::encrypt_block(u32 const* const src, u32* const dst) const noexcept {
         u32 xl = src[0];
         u32 xr = src[1];
 
@@ -132,7 +132,7 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    void Blowfish::decrypt_block(u32 const* const src, u32* const dst) const noexcept {
+    void blowfish::decrypt_block(u32 const* const src, u32* const dst) const noexcept {
         u32 xl = src[0];
         u32 xr = src[1];
 
@@ -186,8 +186,8 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    auto Blowfish::encrypt_ecb(void const* data, size_t const nbytes) const noexcept
-        ->  std::vector<u8>
+    auto blowfish::encrypt_ecb(void const* data, size_t const nbytes) const noexcept
+        ->  std::vector<unsigned char>
     {
         if (data == nullptr || nbytes == 0)
             return {};
@@ -195,10 +195,10 @@ namespace bee::crypto {
         // Z wykorzystaniem przysłanego wskaźnika tworzymy wektor bajtów.
         // Jeśli rozmiar danych nie jest wielokrotnością 'bloku' to dodajemy 'padding',
         // aby dane do szyfrowania faktycznie miały rozmiar o wielokrotności 'bloku'.
-        auto const ptr = static_cast<u8 const*>(data);
+        auto const ptr = static_cast<unsigned char const*>(data);
 
         // Bufor z jawnymi danymi.
-        std::vector<u8> plain{ptr, ptr + nbytes};
+        std::vector<unsigned char> plain{ptr, ptr + nbytes};
         auto size = plain.size();
         if (size % BLOCK_SIZE) {
             auto const blocks = (size / BLOCK_SIZE) + 1;
@@ -228,7 +228,7 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    auto Blowfish::decrypt_ecb(void const* const cipher, size_t const nbytes) const noexcept
+    auto blowfish::decrypt_ecb(void const* const cipher, size_t const nbytes) const noexcept
         ->  std::vector<u8>
     {
         if (cipher == nullptr || nbytes == 0)
@@ -259,7 +259,7 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    auto Blowfish::encrypt_cbc(void const* const data, size_t const nbytes, void const* const iv) const noexcept
+    auto blowfish::encrypt_cbc(void const* const data, size_t const nbytes, void const* const iv) const noexcept
     -> std::vector<u8>
     {
         if (!data || nbytes == 0)
@@ -288,7 +288,7 @@ namespace bee::crypto {
         else
             std::memcpy(cipher.data(), box::random_bytes(BLOCK_SIZE).data(), BLOCK_SIZE);
 
-        std::cout << std::format("I: {}\n", box::bytes_to_string(cipher, BLOCK_SIZE, true));
+        // std::cout << std::format("I: {}\n", box::bytes_to_string(cipher, BLOCK_SIZE, true));
 
 
         // Szyfrowanie.
@@ -311,7 +311,7 @@ namespace bee::crypto {
     *                                                               *
     ****************************************************************/
 
-    auto Blowfish::decrypt_cbc(void const* const cipher, size_t nbytes) const noexcept
+    auto blowfish::decrypt_cbc(void const* const cipher, size_t nbytes) const noexcept
     -> std::vector<u8>
     {
         if (!cipher || nbytes == 0)

@@ -26,6 +26,24 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include <cstdint>
+#include <span>
+#include <string>
+#include <vector>
+#include <string_view>
+#include <type_traits>
+
+template <typename T>
+concept BytesContainer = std::is_class_v<std::string> ||
+                         std::is_class_v<std::vector<char>> ||
+                         std::is_class_v<std::vector<unsigned char>>;
+
+template <typename T>
+concept BytesView = std::is_class_v<std::string_view> ||
+                    std::is_class_v<std::span<char>> ||
+                    std::is_class_v<std::span<char const>> ||
+                    std::is_class_v<std::span<unsigned char>> ||
+                    std::is_class_v<std::span<unsigned char const>>;
+
 
 namespace bee {
     using i8 = int8_t;

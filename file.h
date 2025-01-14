@@ -55,10 +55,10 @@ namespace bee::file {
         return {};
     }
 
-    static bool write_binary(std::string const& fpath, std::string const& data) {
+    static bool write_binary(std::string const& fpath, BytesView auto const data) {
         if (std::ofstream f(fpath, std::ios::out | std::ios::binary | std::ios::trunc); f.is_open()) {
             try {
-                f.write(data.data(), static_cast<ssize_t>(data.size()));
+                f.write(reinterpret_cast<char const*>(data.data()), static_cast<ssize_t>(data.size()));
             }
             catch (std::ios_base::failure const& err) {
                 std::cerr << err.what() << std::endl;

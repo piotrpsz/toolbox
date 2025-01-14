@@ -10,7 +10,7 @@
 
 
 namespace bee::crypto {
-    class Blowfish final {
+    class blowfish final {
         static constexpr size_t ROUND_COUNT = 16;
         static constexpr size_t BLOCK_SIZE = 8;
         static constexpr size_t KEY_MINSIZE = 4;
@@ -19,15 +19,27 @@ namespace bee::crypto {
         u32 p[ROUND_COUNT + 2]{};
         u32 s[4][256]{};
     public:
-        Blowfish(void const* key_material, size_t key_size);
-        ~Blowfish();
+        blowfish(void const* key_material, size_t key_size);
+        explicit blowfish(BytesView auto const key) : blowfish(key.data(), key.size()) {};
+        ~blowfish();
+
+        [[nodiscard]] static size_t key_maxsize() noexcept { return KEY_MAXSIZE; }
+        [[nodiscard]] static size_t key_minsize() noexcept { return KEY_MINSIZE; }
 
         void encrypt_block(u32 const*, u32*) const noexcept;
         void decrypt_block(u32 const*, u32*) const noexcept;
 
+        auto encrypt_ecb(BytesView auto const data) const noexcept
+        -> std::vector<unsigned char> {
+            return encrypt_ecb(data.data(), data.size());
+        }
         auto encrypt_ecb(void const*, size_t) const noexcept
-        -> std::vector<u8>;
+        -> std::vector<unsigned char>;
 
+        auto decrypt_ecb(BytesView auto const data) const noexcept
+        -> std::vector<u8> {
+            return decrypt_ecb(data.data(), data.size());
+        }
         auto decrypt_ecb(const void*, size_t) const noexcept
         -> std::vector<u8>;
 

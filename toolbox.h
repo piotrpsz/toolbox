@@ -35,15 +35,7 @@
 #include <format>
 #include <span>
 #include <filesystem>
-
 #include "lzav.h"
-
-template <typename T>
-concept BytesContainer = std::is_class_v<std::string> ||
-                        std::is_class_v<std::vector<char>> ||
-                        std::is_class_v<std::vector<unsigned char>>;
-
-
 namespace fs = std::filesystem;
 
 namespace bee {
@@ -167,9 +159,18 @@ namespace bee {
         /// \param bytes Span bajtów do konwersji,
         /// \param n Liczba bajtów do konwersji (-1 dla wszystkich).
         static auto to_string(
-            std::span<unsigned char const> bytes,
+            BytesView auto const  bytes,
             int n = -1) noexcept
-        -> std::string;
+        -> std::string {
+            std::string buffer;
+            buffer.reserve(bytes.size());
+            if (bytes.size() > n)
+                bytes = bytes.subspan(0, n);
+
+            for (auto const v : bytes)
+                buffer.push_back(static_cast<char>(v));
+            return buffer;
+        }
 
         /// Sprawdzenie, czy przysłany znak NIE jest białym znakiem.
         /// \param c Znak do sprawdzenia
@@ -226,15 +227,39 @@ namespace bee {
         /// \param as_hex Flaga określająca czy liczby mają być w reprezentacji szesnastkowej.
         /// \return Tekst z liczbami.
         static auto bytes_to_string(
-            std::span<unsigned char> data,
+            BytesView auto const data,
             bool as_hex = false) noexcept
-        -> std::string;
+        -> std::string
+        {
+            auto const fmt = [as_hex] (unsigned char const ch) noexcept {
+                return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
+            };
+
+            std::vector<std::string> elements{};
+            elements.reserve(data.size());
+            for (auto const ch : data)
+                elements.push_back(fmt(ch));
+
+            return join(elements, ", ");
+        }
+
 
         static auto bytes_to_string(
-            std::span<unsigned char> data,
+            BytesView auto const data,
             size_t n,
             bool as_hex = false) noexcept
-        -> std::string;
+        -> std::string {
+            auto const fmt = [as_hex] (unsigned char const ch) noexcept {
+                return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
+            };
+
+            std::vector<std::string> elements{};
+            elements.reserve(n);
+            for (auto const ch : data.first(n))
+                elements.push_back(fmt(ch));
+
+            return join(elements, ", ");
+        }
 
         /// Utworzenie wektora losowych bajtów.
         /// \param n - oczekiwana liczba bajtów.
@@ -250,7 +275,7 @@ namespace bee {
 
         /// Kompresja ciągłego ciągu bajtów (kontenera).
         // https://github.com/avaneev/lzav
-        static inline std::vector<char> compress(BytesContainer auto const& data) {
+        static inline std::vector<char> compress(BytesView auto const data) {
             auto const max_size =  lzav_compress_bound(static_cast<int>(data.size()));
             std::vector<char> buffer(max_size);
             auto const comp_size = lzav_compress_default(data.data(), buffer.data(), data.size(),max_size);
@@ -270,7 +295,7 @@ namespace bee {
         }
 
         /// Dekompresja ciągłego ciągu bajtów (kontenera)
-        static std::vector<char> decompress(BytesContainer auto const& data) {
+        static std::vector<char> decompress(BytesView auto const data) {
             // Pierwsze 4 bajty zawierają rozmiar oryginalnego tekstu.
             u32 src_size;
             std::memcpy(&src_size, data.data(), sizeof(u32));

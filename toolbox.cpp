@@ -57,34 +57,6 @@ namespace bee {
 
     /****************************************************************
     *                                                               *
-    *                      t o _ s t r i n g                        *
-    *                                                               *
-    *  std::span<unsigned char>                                     *
-    ****************************************************************/
-
-    auto box::to_string(
-        std::span<unsigned char const> bytes,
-        int const n) noexcept
-    -> std::string
-    {
-        std::string buffer;
-        buffer.reserve(bytes.size());
-        if (bytes.size() > n)
-            bytes = bytes.subspan(0, n);
-
-        for (auto const v : bytes)
-            buffer.push_back(static_cast<char>(v));
-        return buffer;
-
-        // Problem with 'to<>'
-        // return bytes
-        //     | std::views::transform([] (unsigned char const c) { return static_cast<char>(c); })
-        //     | std::views::take(n)
-        //     | std::ranges::to<std::string>();
-    }
-
-    /****************************************************************
-    *                                                               *
     *                         s p l i t                             *
     *                                                               *
     ****************************************************************/
@@ -148,51 +120,6 @@ namespace bee {
         return buffer;
     }
 
-    /****************************************************************
-    *                                                               *
-    *                b y t e s _ t o _ s t r i n g                  *
-    *                                                               *
-    ****************************************************************/
-
-    auto box::bytes_to_string(
-        std::span<unsigned char> const data,
-        bool const as_hex) noexcept
-    -> std::string
-    {
-        auto const fmt = [as_hex] (unsigned char const ch) noexcept {
-            return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
-        };
-
-        std::vector<std::string> elements{};
-        elements.reserve(data.size());
-        for (auto const ch : data)
-            elements.push_back(fmt(ch));
-
-        // Problem 'to<>'
-        // auto elements = data
-        //     | std::views::transform([&](auto const ch) { return fmt(ch); })
-        //     | std::ranges::to<std::vector>();
-
-        return join(elements, ", ");
-    }
-
-    auto box::bytes_to_string(
-        std::span<unsigned char> const data,
-        size_t const n,
-        bool const as_hex) noexcept
-    -> std::string
-    {
-        auto const fmt = [as_hex] (unsigned char const ch) noexcept {
-            return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
-        };
-
-        std::vector<std::string> elements{};
-        elements.reserve(n);
-        for (auto const ch : data.first(n))
-            elements.push_back(fmt(ch));
-
-        return join(elements, ", ");
-    }
     /****************************************************************
     *                                                               *
     *                    r a n d o m _ b y t e s                    *
