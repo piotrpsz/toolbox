@@ -25,6 +25,7 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "types.h"
+#include "lzav.h"
 #include <pwd.h>        // getpwuid
 #include <unistd.h>     // getuid
 #include <string>
@@ -35,7 +36,8 @@
 #include <format>
 #include <span>
 #include <filesystem>
-#include "lzav.h"
+#include <iostream>
+
 namespace fs = std::filesystem;
 
 namespace bee {
@@ -307,6 +309,16 @@ namespace bee {
                 return {};
 
             return std::move(buffer);
+        }
+
+        template<typename... Args>
+        static void print(std::format_string<Args...> fmt, Args... args) {
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << std::flush;
+        }
+
+        template<typename... Args>
+        static void print_error(std::format_string<Args...> fmt, Args... args) {
+            std::cerr << std::format(fmt, std::forward<Args>(args)...) << std::flush;
         }
 
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
