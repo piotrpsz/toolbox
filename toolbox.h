@@ -317,8 +317,19 @@ namespace bee {
         }
 
         template<typename... Args>
+        static void println(std::format_string<Args...> fmt, Args... args) {
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << '\n' << std::flush;
+        }
+
+
+        template<typename... Args>
         static void print_error(std::format_string<Args...> fmt, Args... args) {
-            std::cerr << std::format(fmt, std::forward<Args>(args)...) << std::flush;
+            std::cerr << std::format(fmt, std::forward<Args>(args)...);
+        }
+
+        template<typename... Args>
+        static void println_error(std::format_string<Args...> fmt, Args... args) {
+            std::cerr << std::format(fmt, std::forward<Args>(args)...) << "\n";;
         }
 
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
