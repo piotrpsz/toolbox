@@ -37,6 +37,7 @@
 #include <span>
 #include <filesystem>
 #include <iostream>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -318,7 +319,7 @@ namespace bee {
 
         template<typename... Args>
         static void println(std::format_string<Args...> fmt, Args... args) {
-            std::cout << std::format(fmt, std::forward<Args>(args)...) << '\n' << std::flush;
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << " [tid: " << std::this_thread::get_id() << "]\n" << std::flush;
         }
 
 
