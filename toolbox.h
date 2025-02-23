@@ -332,6 +332,14 @@ namespace bee {
             std::cerr << std::format(fmt, std::forward<Args>(args)...) << "\n";;
         }
 
+        template<typename... Args>
+        static void println_ptr(auto* ptr, std::format_string<Args...> fmt, Args... args) {
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << " [" << ptr << "]\n" << std::flush;
+        }
+        // static void println_ptr(std::string_view const str, auto* ptr) {
+        //     std::cout << str << ", addr: " << ptr << "\n";
+        // }
+
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
         /// Usage: testowanie funkcji add()\n
         /// \code
