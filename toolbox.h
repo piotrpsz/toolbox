@@ -37,6 +37,7 @@
 #include <span>
 #include <filesystem>
 #include <iostream>
+#include <random>
 
 namespace fs = std::filesystem;
 
@@ -266,8 +267,27 @@ namespace bee {
         /// Utworzenie wektora losowych bajtów.
         /// \param n - oczekiwana liczba bajtów.
         /// \return Wektor losowych bajtów.
-        static auto random_bytes(size_t n) noexcept
-        -> std::vector<unsigned char>;
+        template<typename T>
+        static auto random_bytes(size_t const n) noexcept -> std::vector<T> {
+            if (n == 0)
+                return std::vector<T>{};
+
+            std::random_device rd;
+            std::array<int, std::mt19937::state_size> seed_data{};
+            std::ranges::generate(seed_data, ref(rd));
+            std::seed_seq seq(begin(seed_data), end(seed_data));
+
+            auto mersenne_twister_engine = std::mt19937{seq};
+            auto ud = std::uniform_int_distribution<>{0, 255};
+
+            std::vector<T> buffer;
+            buffer.reserve(n);
+            for (auto i = 0; i < n; ++i) {
+                auto const c = ud(mersenne_twister_engine);
+                buffer.push_back(static_cast<T>(c));
+            }
+            return buffer;
+        }
 
         /// Wyznaczenie katalogu domowego aktualnego użytkownika.
         static std::string home_dir();

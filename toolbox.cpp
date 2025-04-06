@@ -126,9 +126,13 @@ namespace bee {
     *                                                               *
     ****************************************************************/
 
+    /*
     auto box::random_bytes(size_t const n) noexcept
     -> std::vector<unsigned char>
     {
+        if (n == 0)
+            return std::vector<unsigned char>{};
+
         std::random_device rd;
         std::array<int, std::mt19937::state_size> seed_data{};
         std::ranges::generate(seed_data, ref(rd));
@@ -150,6 +154,7 @@ namespace bee {
         //         | std::views::transform([&](auto _) { return static_cast<unsigned char>(ud(mersenne_twister_engine)); })
         //         | std::ranges::to<std::vector>();
     }
+    */
 
     /****************************************************************
     *                                                               *

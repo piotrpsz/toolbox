@@ -2,6 +2,7 @@
 // Created by piotr on 06.04.25.
 //
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "../toolbox.h"
 
 TEST(Toolbox, trim_left) {
@@ -73,5 +74,16 @@ TEST(Toolbox, trim) {
     for (auto&& [input, expected] : tests) {
         auto const result = box::trim(input);
         EXPECT_EQ(result, expected);
+    }
+}
+
+TEST(Toolbox, lzav_compress_decompress) {
+    using namespace bee;
+
+    for (auto i = 0; i < 2048; ++i) {
+        auto const bytes = box::random_bytes<char>(i);
+        const auto compressed = box::compress(bytes);
+        auto const decompressed = box::decompress(compressed);
+        ASSERT_EQ(decompressed, bytes);
     }
 }
