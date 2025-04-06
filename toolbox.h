@@ -161,19 +161,19 @@ namespace bee {
         /// Konwersja wektora bajtów (unsigned char) na tekst.
         /// \param bytes Span bajtów do konwersji,
         /// \param n Liczba bajtów do konwersji (-1 dla wszystkich).
-        static auto to_string(
-            BytesView auto const  bytes,
-            int n = -1) noexcept
-        -> std::string {
-            std::string buffer;
-            buffer.reserve(bytes.size());
-            if (bytes.size() > n)
-                bytes = bytes.subspan(0, n);
-
-            for (auto const v : bytes)
-                buffer.push_back(static_cast<char>(v));
-            return buffer;
-        }
+        // static auto to_string(
+        //     BytesView auto const  bytes,
+        //     int n = -1) noexcept
+        // -> std::string {
+        //     std::string buffer;
+        //     buffer.reserve(bytes.size());
+        //     if (bytes.size() > n)
+        //         bytes = bytes.subspan(0, n);
+        //
+        //     for (auto const v : bytes)
+        //         buffer.push_back(static_cast<char>(v));
+        //     return buffer;
+        // }
 
         /// Sprawdzenie, czy przysłany znak NIE jest białym znakiem.
         /// \param c Znak do sprawdzenia

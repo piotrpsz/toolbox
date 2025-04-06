@@ -191,3 +191,33 @@ TEST(Toolbox, bytes_to_string_n) {
         ASSERT_EQ(retv, expected);
     }
 }
+
+TEST(Toolbox, to_string_integral) {
+    using namespace bee;
+
+    struct Test {
+        int n;
+        std::string expected;
+    } tests[] = {
+        {0, "0"},
+        {1, "1"},
+        {12, "12"},
+        {123, "123"},
+        {1234, "1.234"},
+        {12345, "12.345"},
+        {123456, "123.456"},
+        {1234567, "1.234.567"},
+        {-1, "-1"},
+        {-12, "-12"},
+        {-123, "-123"},
+        {-1234, "-1.234"},
+        {-12345, "-12.345"},
+        {-123456, "-123.456"},
+        {-1234567, "-1.234.567"}
+    };
+
+    for (auto&& [n, expected] : tests) {
+        auto const retv = box::to_string(n);
+        ASSERT_EQ(retv, expected);
+    }
+}
