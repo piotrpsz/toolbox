@@ -126,3 +126,68 @@ TEST(Toolbox, join) {
         ASSERT_EQ(retv, expected);
     }
 }
+
+TEST(Toolbox, bytes_to_string) {
+    using namespace bee;
+
+    struct Test {
+        std::vector<u8> input;
+        std::string expected;
+    } tests[] = {
+        { {}, ""},
+        {
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+            "0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f"
+        },
+        {
+            {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
+            "0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef"
+        }
+    };
+
+    for (auto&& [input, expected] : tests) {
+        auto const retv = box::bytes_to_string(input, true);
+        ASSERT_EQ(retv, expected);
+    }
+}
+
+TEST(Toolbox, bytes_to_string_n) {
+    using namespace bee;
+
+    struct Test {
+        std::vector<u8> input;
+        int n;
+        std::string expected;
+    } tests[] = {
+        {
+            {},
+            3,
+            ""
+        },
+        {
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+            0,
+            ""
+        },
+        {
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+            5,
+            "0x01, 0x02, 0x03, 0x04, 0x05"
+        },
+        {
+            {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
+            3,
+            "0xab, 0xcd, 0xef"
+        },
+        {
+            {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
+            100,
+            "0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef"
+        }
+    };
+
+    for (auto&& [input, n, expected] : tests) {
+        auto const retv = box::bytes_to_string(input, n, true);
+        ASSERT_EQ(retv, expected);
+    }
+}

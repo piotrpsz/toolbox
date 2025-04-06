@@ -225,8 +225,9 @@ namespace bee {
             std::string_view delimiter = ",") noexcept
         -> std::string;
 
-        /// Zamiana wektora bajtów na tekst, w którym liczby rozdzielone są przecinkami.
-        /// \param data Wektor/span bajtów do konwersji.
+        /// Zamiana całego kontenera bajtów na tekst,
+        /// w którym liczby rozdzielone są przecinkami.
+        /// \param data Widok kontenera bajtów do konwersji.
         /// \param as_hex Flaga określająca czy liczby mają być w reprezentacji szesnastkowej.
         /// \return Tekst z liczbami.
         static auto bytes_to_string(
@@ -249,17 +250,22 @@ namespace bee {
 
         static auto bytes_to_string(
             BytesView auto const data,
-            size_t n,
+            size_t const n,
             bool as_hex = false) noexcept
         -> std::string {
+            if (data.empty() || n == 0)
+                return {};
+
             auto const fmt = [as_hex] (unsigned char const ch) noexcept {
                 return as_hex ? std::format("0x{:02x}", ch) : std::format("{}", ch);
             };
 
             std::vector<std::string> elements{};
             elements.reserve(n);
-            for (auto const ch : data.first(n))
-                elements.push_back(fmt(ch));
+
+            size_t j = 0;
+            for (auto it = std::begin(data); it != std::end(data) && j < n; ++it, ++j)
+                elements.push_back(fmt(*it));
 
             return join(elements, ", ");
         }
@@ -297,7 +303,7 @@ namespace bee {
 
         /// Kompresja ciągłego ciągu bajtów (kontenera).
         // https://github.com/avaneev/lzav
-        static inline std::vector<char> compress(BytesView auto const data) {
+        static std::vector<char> compress(BytesView auto const data) {
             auto const max_size =  lzav_compress_bound(static_cast<int>(data.size()));
             std::vector<char> buffer(max_size);
             auto const comp_size = lzav_compress_default(data.data(), buffer.data(), data.size(),max_size);
@@ -321,8 +327,8 @@ namespace bee {
             // Pierwsze 4 bajty zawierają rozmiar oryginalnego tekstu.
             u32 src_size;
             std::memcpy(&src_size, data.data(), sizeof(u32));
-
             std::vector<char> buffer(src_size);
+
             auto const size = static_cast<int>(data.size() - sizeof(u32));
             auto const decomp_size = lzav_decompress(data.data() + sizeof(u32), buffer.data(), size, src_size);
             if (decomp_size < 0)
