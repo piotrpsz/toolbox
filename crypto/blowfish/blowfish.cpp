@@ -286,7 +286,7 @@ namespace bee::crypto {
         if (iv)
             std::memcpy(cipher.data(), iv, BLOCK_SIZE);
         else
-            std::memcpy(cipher.data(), box::random_bytes(BLOCK_SIZE).data(), BLOCK_SIZE);
+            std::memcpy(cipher.data(), box::random_bytes<u8>(BLOCK_SIZE).data(), BLOCK_SIZE);
 
         // std::cout << std::format("I: {}\n", box::bytes_to_string(cipher, BLOCK_SIZE, true));
 

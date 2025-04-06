@@ -22,7 +22,7 @@ namespace bee::crypto {
     void clear_bytes(void* const data, size_t const nbytes) noexcept {
         // czterokrotnie wypełniamy bufor liczbami losowymi
         for (auto i = 0; i < 4; ++i) {
-            const auto rnd = box::random_bytes(nbytes);
+            const auto rnd = box::random_bytes<u8>(nbytes);
             std::memcpy(data, rnd.data(), nbytes);
         }
         std::memset(data, 0x55, nbytes);

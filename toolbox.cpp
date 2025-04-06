@@ -100,6 +100,9 @@ namespace bee {
         std::string_view const delimiter) noexcept
     -> std::string
     {
+        if (data.empty())
+            return {};
+
         const auto tokens_size = std::accumulate(
             std::begin(data),
             std::end(data),
@@ -113,10 +116,15 @@ namespace bee {
         buffer.reserve(tokens_size + data.size() - 1);
 
         // Ze spanu kopiujemy elementy od początku, ale bez ostatniego elementu.
-        std::ranges::for_each(data.first(data.size() - 1), [&buffer, delimiter](auto&& token) {
-            buffer += token + std::string(delimiter)  ;
+        std::ranges::for_each(data, [&buffer, delimiter](auto&& token) {
+            if (!token.empty())
+                buffer += token + std::string(delimiter)  ;
         });
-        buffer += data.back();
+
+        if (buffer.ends_with(delimiter))
+            buffer.resize(buffer.size() - delimiter.size());
+        buffer.shrink_to_fit();
+
         return buffer;
     }
 
