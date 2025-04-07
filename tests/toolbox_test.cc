@@ -5,8 +5,6 @@
 #include <gmock/gmock.h>
 #include "../toolbox.h"
 
-#include <__expected/expected.h>
-
 TEST(Toolbox, trim_left) {
     struct Test {
         std::string input;
@@ -285,7 +283,7 @@ TEST(Toolbox, to_string_float) {
             double value;
             int digits_after_decpoint; // digits number after decimal point
             char decimal_point;
-            char thousend_separator;
+            char thousand_separator;
             std::string expected;
         } tests[] = {
             {1234.1234, 3, '.', '`', "1`234.123"},
