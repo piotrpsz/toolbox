@@ -24,6 +24,7 @@
 -------------------------------------------------------------------*/
 #include "toolbox.h"
 #include <iostream>
+#include <sstream>
 #include <numeric>
 #include <random>
 #include <charconv>

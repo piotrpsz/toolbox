@@ -5,25 +5,27 @@
 #include <gmock/gmock.h>
 #include "../toolbox.h"
 
+#include <__expected/expected.h>
+
 TEST(Toolbox, trim_left) {
     struct Test {
         std::string input;
         std::string expected;
     } tests[] = {
-        {"", ""},
-        {"text", "text"},
-        {" text", "text"},
-        {"  text", "text"},
-        {"   text", "text"},
-        {"    text", "text"},
-        {"     text", "text"},
-        {"      text", "text"},
-        {"       text", "text"},
-    };
+                {"", ""},
+                {"text", "text"},
+                {" text", "text"},
+                {"  text", "text"},
+                {"   text", "text"},
+                {"    text", "text"},
+                {"     text", "text"},
+                {"      text", "text"},
+                {"       text", "text"},
+            };
 
     using namespace bee;
 
-    for (auto&& [input, expected] : tests) {
+    for (auto&& [input, expected]: tests) {
         auto const result = box::trim_left(input);
         EXPECT_EQ(result, expected);
     }
@@ -34,20 +36,20 @@ TEST(Toolbox, trim_right) {
         std::string input;
         std::string expected;
     } tests[] = {
-        {"", ""},
-        {"text", "text"},
-        {"text ", "text"},
-        {"text  ", "text"},
-        {"text   ", "text"},
-        {"text    ", "text"},
-        {"text     ", "text"},
-        {"text      ", "text"},
-        {"text       ", "text"},
-    };
+                {"", ""},
+                {"text", "text"},
+                {"text ", "text"},
+                {"text  ", "text"},
+                {"text   ", "text"},
+                {"text    ", "text"},
+                {"text     ", "text"},
+                {"text      ", "text"},
+                {"text       ", "text"},
+            };
 
     using namespace bee;
 
-    for (auto&& [input, expected] : tests) {
+    for (auto&& [input, expected]: tests) {
         auto const result = box::trim_right(input);
         EXPECT_EQ(result, expected);
     }
@@ -60,18 +62,18 @@ TEST(Toolbox, trim) {
         std::string input;
         std::string expected;
     } tests[] = {
-        {"", ""},
-        {"text", "text"},
-        {" text ", "text"},
-        {"  text  ", "text"},
-        {"   text   ", "text"},
-        {"    text    ", "text"},
-        {"     text     ", "text"},
-        {"      text      ", "text"},
-        {"        text       ", "text"},
-    };
+                {"", ""},
+                {"text", "text"},
+                {" text ", "text"},
+                {"  text  ", "text"},
+                {"   text   ", "text"},
+                {"    text    ", "text"},
+                {"     text     ", "text"},
+                {"      text      ", "text"},
+                {"        text       ", "text"},
+            };
 
-    for (auto&& [input, expected] : tests) {
+    for (auto&& [input, expected]: tests) {
         auto const result = box::trim(input);
         EXPECT_EQ(result, expected);
     }
@@ -95,15 +97,15 @@ TEST(Toolbox, split) {
         std::string input;
         std::vector<std::string> expected;
     } tests[] = {
-        { "", {}},
-        {"a", { "a"}},
-        {"a, b", {"a", "b"}},
-        {"a, , , b", {"a", "b"}},
-        {"a,,b, ,\n,  c,, d,e, f", {"a", "b", "c", "d", "e", "f"}},
-        {"\n, , a,,b , ,\n,  c,, d,e, f, \n, ,", {"a", "b", "c", "d", "e", "f"}},
-    };
+                {"", {}},
+                {"a", {"a"}},
+                {"a, b", {"a", "b"}},
+                {"a, , , b", {"a", "b"}},
+                {"a,,b, ,\n,  c,, d,e, f", {"a", "b", "c", "d", "e", "f"}},
+                {"\n, , a,,b , ,\n,  c,, d,e, f, \n, ,", {"a", "b", "c", "d", "e", "f"}},
+            };
 
-    for (auto&& [input, expected] : tests) {
+    for (auto&& [input, expected]: tests) {
         auto const retv = box::split(input, ',');
         ASSERT_EQ(retv, expected);
     }
@@ -116,12 +118,12 @@ TEST(Toolbox, join) {
         std::vector<std::string> input;
         std::string expected;
     } tests[] = {
-        { {}, ""},
-        {{"a"},"a"},
-        {{"a", "b", "",  "c", ""}, "a,b,c"}
-    };
+                {{}, ""},
+                {{"a"}, "a"},
+                {{"a", "b", "", "c", ""}, "a,b,c"}
+            };
 
-    for (auto&& [input, expected] : tests) {
+    for (auto&& [input, expected]: tests) {
         auto const retv = box::join(input, ",");
         ASSERT_EQ(retv, expected);
     }
@@ -134,18 +136,18 @@ TEST(Toolbox, bytes_to_string) {
         std::vector<u8> input;
         std::string expected;
     } tests[] = {
-        { {}, ""},
-        {
-            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-            "0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f"
-        },
-        {
-            {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
-            "0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef"
-        }
-    };
+                {{}, ""},
+                {
+                    {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+                    "0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f"
+                },
+                {
+                    {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
+                    "0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef"
+                }
+            };
 
-    for (auto&& [input, expected] : tests) {
+    for (auto&& [input, expected]: tests) {
         auto const retv = box::bytes_to_string(input, true);
         ASSERT_EQ(retv, expected);
     }
@@ -159,34 +161,34 @@ TEST(Toolbox, bytes_to_string_n) {
         int n;
         std::string expected;
     } tests[] = {
-        {
-            {},
-            3,
-            ""
-        },
-        {
-            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-            0,
-            ""
-        },
-        {
-            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-            5,
-            "0x01, 0x02, 0x03, 0x04, 0x05"
-        },
-        {
-            {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
-            3,
-            "0xab, 0xcd, 0xef"
-        },
-        {
-            {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
-            100,
-            "0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef"
-        }
-    };
+                {
+                    {},
+                    3,
+                    ""
+                },
+                {
+                    {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+                    0,
+                    ""
+                },
+                {
+                    {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+                    5,
+                    "0x01, 0x02, 0x03, 0x04, 0x05"
+                },
+                {
+                    {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
+                    3,
+                    "0xab, 0xcd, 0xef"
+                },
+                {
+                    {0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef},
+                    100,
+                    "0xab, 0xcd, 0xef, 0xba, 0xbb, 0xbe, 0xef"
+                }
+            };
 
-    for (auto&& [input, n, expected] : tests) {
+    for (auto&& [input, n, expected]: tests) {
         auto const retv = box::bytes_to_string(input, n, true);
         ASSERT_EQ(retv, expected);
     }
@@ -199,34 +201,33 @@ TEST(Toolbox, to_string_integral) {
         int n;
         std::string expected;
     } tests[] = {
-        {0, "0"},
-        {1, "1"},
-        {12, "12"},
-        {123, "123"},
-        {1234, "1.234"},
-        {12345, "12.345"},
-        {123456, "123.456"},
-        {1234567, "1.234.567"},
-        {-1, "-1"},
-        {-12, "-12"},
-        {-123, "-123"},
-        {-1234, "-1.234"},
-        {-12345, "-12.345"},
-        {-123456, "-123.456"},
-        {-1234567, "-1.234.567"}
-    };
+                {0, "0"},
+                {1, "1"},
+                {12, "12"},
+                {123, "123"},
+                {1234, "1.234"},
+                {12345, "12.345"},
+                {123456, "123.456"},
+                {1234567, "1.234.567"},
+                {-1, "-1"},
+                {-12, "-12"},
+                {-123, "-123"},
+                {-1234, "-1.234"},
+                {-12345, "-12.345"},
+                {-123456, "-123.456"},
+                {-1234567, "-1.234.567"}
+            };
 
-    for (auto&& [n, expected] : tests) {
+    for (auto&& [n, expected]: tests) {
         auto const retv = box::to_string(n);
         ASSERT_EQ(retv, expected);
     }
 }
 
 TEST(Toolbox, to_string_float) {
-    using namespace bee;
-    {
+    using namespace bee; {
         struct Test {
-            double n;
+            double value;
             std::string expected;
         } tests[] = {
             {0, "0,00"},
@@ -247,25 +248,24 @@ TEST(Toolbox, to_string_float) {
             {-1234567.1234, "-1.234.567,12"},
         };
 
-        for (auto&& [n, expected] : tests) {
-            auto const retv = box::to_string(n);
+        for (auto&& [value, expected]: tests) {
+            auto const retv = box::to_string(value);
             ASSERT_EQ(retv, expected);
         }
-    }
-    {
+    } {
         struct Test {
-            double n;
-            int k; // digits number after decimal point
+            double value;
+            int digits_after_decpoint; // digits number after decimal point
             std::string expected;
         } tests[] = {
             {0, 3, "0,000"},
             {1.1, 3, "1,100"},
             {12.12, 3, "12,120"},
-            {123.123, 3,  "123,123"},
+            {123.123, 3, "123,123"},
             {1234.1234, 3, "1.234,123"},
-            {12345.12346, 4,  "12.345,1235"},
+            {12345.12346, 4, "12.345,1235"},
             {123456.1234, 3, "123.456,123"},
-            {1234567.1234, 3,  "1.234.567,123"},
+            {1234567.1234, 3, "1.234.567,123"},
             {0, 3, "0,000"},
             {-1.1, 3, "-1,100"},
             {-12.12, 3, "-12,120"},
@@ -275,10 +275,26 @@ TEST(Toolbox, to_string_float) {
             {-123456.1234, 3, "-123.456,123"},
             {-1234567.1234, 3, "-1.234.567,123"},
         };
-        for (auto&& [n, k, expected] : tests) {
-            auto const retv = box::to_string(n, k);
+        for (auto&& [value, digits_after_decpoint, expected]: tests) {
+            auto const retv = box::to_string(value, digits_after_decpoint);
             ASSERT_EQ(retv, expected);
         }
-
+    }
+    {
+        struct Test {
+            double value;
+            int digits_after_decpoint; // digits number after decimal point
+            char decimal_point;
+            char thousend_separator;
+            std::string expected;
+        } tests[] = {
+            {1234.1234, 3, '.', '`', "1`234.123"},
+            {1234567.1234, 3, ',', ' ', "1 234 567,123"},
+            {1234567.1234, 4, '#', '$', "1$234$567#1234"},
+        };
+        for (auto&& [value, digits_after_decpoint, point, separator, expected]: tests) {
+            auto const retv = box::to_string(value, digits_after_decpoint, point, separator);
+            ASSERT_EQ(retv, expected);
+        }
     }
 }
