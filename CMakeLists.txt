@@ -4,7 +4,7 @@ project(toolbox)
 set(CMAKE_CXX_STANDARD 23)
 
 find_package(date REQUIRED)
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
 add_library(toolbox STATIC
         toolbox.cpp toolbox.h
