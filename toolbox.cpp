@@ -24,21 +24,18 @@
 -------------------------------------------------------------------*/
 #include "toolbox.h"
 #include <iostream>
-#include <sstream>
-#include <numeric>
-#include <random>
-#include <charconv>
+#include <unistd.h>
 #include <format>
-#include <span>
+#include <pwd.h>
+#include <sstream>
+#include <filesystem>
 
 namespace bee {
 
-    /****************************************************************
-    *                                                               *
-    *                        t o _ i n t                            *
-    *                                                               *
-    ****************************************************************/
-
+    // Konwersja tekstu z liczbą całkowitą na liczbę.
+    // \param sv Widok tekstu zawierającego liczbę,
+    // \param base System liczbowy, w którym liczba jest prezentowana w tekście (domyślnie 10)
+    // \return Opcjonalnie wyznaczona liczba
     auto box::to_int(std::string_view sv, int const base) noexcept
     -> std::optional<int>
     {
@@ -56,11 +53,11 @@ namespace bee {
         return {};
     }
 
-    /****************************************************************
-    *                                                               *
-    *                         s p l i t                             *
-    *                                                               *
-    ****************************************************************/
+    // Podział przysłanego tekstu na wektor tekstów. \n
+    // Wyodrębnianie tekstów składowych odbywa się po napotkaniu 'delimiter'.
+    // \param text Tekst do podziału,
+    // \param delimiter Znak sygnalizujący podział,
+    // \return Wektor stringów.
     std::vector<std::string> box::split(
         std::string const& text,
         char const delimiter) noexcept
@@ -89,7 +86,7 @@ namespace bee {
         return tokens;
     }
 
-    std::vector<std::string> box::split_own(
+    std::vector<std::string> box::split(
         std::string&& text,
         char const delimiter) noexcept
     {
@@ -117,16 +114,9 @@ namespace bee {
         return tokens;
     }
 
-
-    /****************************************************************
-    *                                                               *
-    *                          j o i n                              *
-    *                                                               *
-    ****************************************************************/
-
     auto box::join(
         std::span<std::string> data,
-        std::string_view const delimiter) noexcept
+        std::string const &delimiter) noexcept
     -> std::string
     {
         if (data.empty())
@@ -147,7 +137,7 @@ namespace bee {
         // Ze spanu kopiujemy elementy od początku, ale bez ostatniego elementu.
         std::ranges::for_each(data, [&buffer, delimiter](auto&& token) {
             if (!token.empty())
-                buffer += token + std::string(delimiter)  ;
+                buffer += token + delimiter;
         });
 
         if (buffer.ends_with(delimiter))
@@ -157,61 +147,9 @@ namespace bee {
         return buffer;
     }
 
-    /****************************************************************
-    *                                                               *
-    *                    r a n d o m _ b y t e s                    *
-    *                                                               *
-    ****************************************************************/
-
-    /*
-    auto box::random_bytes(size_t const n) noexcept
-    -> std::vector<unsigned char>
-    {
-        if (n == 0)
-            return std::vector<unsigned char>{};
-
-        std::random_device rd;
-        std::array<int, std::mt19937::state_size> seed_data{};
-        std::ranges::generate(seed_data, ref(rd));
-        std::seed_seq seq(begin(seed_data), end(seed_data));
-
-        auto mersenne_twister_engine = std::mt19937{seq};
-        auto ud = std::uniform_int_distribution<>{0, 255};
-
-        std::vector<unsigned char> buffer;
-        buffer.reserve(n);
-        for (auto i = 0; i < n; ++i) {
-            auto const c = ud(mersenne_twister_engine);
-            buffer.push_back(static_cast<unsigned char>(c));
-        }
-        return buffer;
-
-        // Problem 'to<>'
-        // return std::views::iota(0, n)
-        //         | std::views::transform([&](auto _) { return static_cast<unsigned char>(ud(mersenne_twister_engine)); })
-        //         | std::ranges::to<std::vector>();
-    }
-    */
-
-    /****************************************************************
-    *                                                               *
-    *                       h o m e _ d i r                         *
-    *                                                               *
-    ****************************************************************/
-
-    std::string box::home_dir() {
-        if (auto const pw = getpwuid(getuid()))
-            return pw->pw_dir;
-        return {};
-    }
-
-    /****************************************************************
-    *                                                               *
-    *                    c r e a t e _ d i r s                      *
-    *                                                               *
-    ****************************************************************/
-
     bool box::create_dirs(std::string_view const path) {
+        namespace fs = std::filesystem;
+
         if (fs::exists(path))
             return true;
 
@@ -223,4 +161,9 @@ namespace bee {
         return {};
     }
 
+    std::string box::home_dir() {
+        if (auto const pw = getpwuid(getuid()))
+            return pw->pw_dir;
+        return {};
+    }
 }

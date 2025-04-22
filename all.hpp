@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #pragma once
+#include "types.h"
 #include "datime.h"
 #include "toolbox.h"
 #include "file.h"

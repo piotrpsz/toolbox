@@ -19,35 +19,56 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#pragma once
 
+#pragma once
 
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "types.h"
 #include "lzav.h"
-#include <pwd.h>        // getpwuid
-#include <unistd.h>     // getuid
-#include <string>
-#include <vector>
-#include <concepts>
-#include <algorithm>
-#include <ranges>
-#include <format>
-#include <span>
-#include <filesystem>
 #include <iostream>
+#include <algorithm>
+#include <string>
+#include <format>
 #include <random>
-
-namespace fs = std::filesystem;
+#include <chrono>
 
 namespace bee {
-
     class box {
         static constexpr auto DECIMAL_POINT = ',';
         static constexpr auto THOUSAND_SEPARATOR = '.';
         static constexpr auto DIGITS_AFTER_DECIMAL_POINT = 2;
     public:
+        /// Utworzenie wszystkich katalogów pośrednich, włącznie z ostatnim.
+        static bool create_dirs(std::string_view path);
+
+        static std::string home_dir();
+
+        template<typename... Args>
+        static void print(std::format_string<Args...> fmt, Args... args) {
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << std::flush;
+        }
+
+        template<typename... Args>
+        static void println(std::format_string<Args...> fmt, Args... args) {
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << '\n' << std::flush;
+        }
+
+
+        template<typename... Args>
+        static void print_error(std::format_string<Args...> fmt, Args... args) {
+            std::cerr << std::format(fmt, std::forward<Args>(args)...);
+        }
+
+        template<typename... Args>
+        static void println_error(std::format_string<Args...> fmt, Args... args) {
+            std::cerr << std::format(fmt, std::forward<Args>(args)...) << "\n";;
+        }
+
+        template<typename... Args>
+        static void println_ptr(auto* ptr, std::format_string<Args...> fmt, Args... args) {
+            std::cout << std::format(fmt, std::forward<Args>(args)...) << " [" << ptr << "]\n" << std::flush;
+        }
 
         /// Zamiana wszystkich znaków tekstu na małe litery.
         static std::string to_lower(std::string_view const sv) {
@@ -58,21 +79,37 @@ namespace bee {
                 buffer.push_back(static_cast<char>(c));
             }
             return buffer;
+        }
 
-            // problem with 'to<>'
-            // return sv
-            //     | std::views::transform([](auto ch) { return tolower(ch); })
-            //     | std::ranges::to<std::string>();
-        };
+        /// Zamiana wszystkich znaków tekstu na duże litery.
+        static std::string to_upper(std::string_view const sv) {
+            std::string buffer;
+            buffer.reserve(sv.size());
+            for (auto const ch : sv) {
+                auto const c = std::toupper(ch);
+                buffer.push_back(static_cast<char>(c));
+            }
+            return buffer;
+        }
 
         /// Konwersja tekstu z liczbą całkowitą na liczbę.
-        /// \param sv View tekstu zawierającego liczbę,
-        /// \param base System, w którym liczba jest prezentowana w tekście (domyślnie 10)
+        /// \param sv Widok tekstu zawierającego liczbę,
+        /// \param base System liczbowy, w którym liczba jest prezentowana w tekście (domyślnie 10)
         /// \return Opcjonalnie wyznaczona liczba
         static auto to_int(
             std::string_view sv,
             int base = 10) noexcept
         -> std::optional<int>;
+
+        /// Tworzy tekst będący złączeniem tekstów przysłanych w wektorze. \n
+        /// Łączone teksty rozdzielone są przysłanym delimiter'em.
+        /// \param data Wektor tekstów do połączenia,
+        /// \param delimiter Tekst wstawiany pomiędzy łączonymi tekstami.
+        /// \return String jako suma połączonych stringów.
+        static auto join(
+            std::span<std::string> data,
+            const std::string &delimiter = ",") noexcept
+        -> std::string;
 
         /// Konwersja liczby całkowitej na tekst.
         /// Formatowanie obejmuje separatory tysięcy.
@@ -161,19 +198,69 @@ namespace bee {
         /// Konwersja wektora bajtów (unsigned char) na tekst.
         /// \param bytes Span bajtów do konwersji,
         /// \param n Liczba bajtów do konwersji (-1 dla wszystkich).
-        // static auto to_string(
-        //     BytesView auto const  bytes,
-        //     int n = -1) noexcept
-        // -> std::string {
-        //     std::string buffer;
-        //     buffer.reserve(bytes.size());
-        //     if (bytes.size() > n)
-        //         bytes = bytes.subspan(0, n);
-        //
-        //     for (auto const v : bytes)
-        //         buffer.push_back(static_cast<char>(v));
-        //     return buffer;
-        // }
+        template<typename T>
+        static auto bytes_as_string(
+            std::span<T> bytes,
+            int const n = -1) noexcept
+        -> std::string {
+            std::string buffer;
+            buffer.reserve(bytes.size());
+            if (bytes.size() > n)
+                bytes = bytes.subspan(0, n);
+
+            for (auto const v : bytes)
+                buffer.push_back(static_cast<T>(v));
+            return buffer;
+        }
+
+        template<typename T>
+        static auto bytes_as_string(
+            std::vector<T> bytes,
+            int const n = -1) noexcept
+        -> std::string {
+            return bytes_as_string<T>(std::span(bytes), n);
+        }
+
+
+        /// Podział przysłanego tekstu na wektor tekstów. \n
+        /// Wyodrębnianie tekstów składowych odbywa się po napotkaniu 'delimiter'.
+        /// \param text Tekst do podziału,
+        /// \param delimiter Znak sygnalizujący podział,
+        /// \return Wektor stringów.
+        static auto split(
+            std::string const& text,
+            char delimiter) noexcept
+        -> std::vector<std::string>;
+
+        static auto split(
+            std::string&& text,
+            char delimiter) noexcept
+        -> std::vector<std::string>;
+
+        /// Utworzenie wektora losowych bajtów.
+        /// \param n - oczekiwana liczba bajtów.
+        /// \return Wektor losowych bajtów.
+        template<typename T>
+        static auto random_bytes(size_t const n) noexcept -> std::vector<T> {
+            if (n == 0)
+                return std::vector<T>{};
+
+            std::random_device rd;
+            std::array<int, std::mt19937::state_size> seed_data{};
+            std::ranges::generate(seed_data, ref(rd));
+            std::seed_seq seq(begin(seed_data), end(seed_data));
+
+            auto mersenne_twister_engine = std::mt19937{seq};
+            auto ud = std::uniform_int_distribution<>{0, 255};
+
+            std::vector<T> buffer;
+            buffer.reserve(n);
+            for (auto i = 0; i < n; ++i) {
+                auto const c = ud(mersenne_twister_engine);
+                buffer.push_back(static_cast<T>(c));
+            }
+            return buffer;
+        }
 
         /// Sprawdzenie, czy przysłany znak NIE jest białym znakiem.
         /// \param c Znak do sprawdzenia
@@ -205,36 +292,12 @@ namespace bee {
             return trim_left(trim_right(std::move(s)));
         }
 
-        /// Podział przysłanego tekstu na wektor tekstów. \n
-        /// Wyodrębnianie tekstów składowych odbywa się po napotkaniu delimiter'a.
-        /// \param text Tekst do podziału,
-        /// \param delimiter Znak sygnalizujący podział,
-        /// \return Wektor stringów.
-        static auto split(
-            std::string const& text,
-            char delimiter) noexcept
-        -> std::vector<std::string>;
-
-        static std::vector<std::string> split_own(
-            std::string&& text,
-            char delimiter) noexcept;
-
-        /// Tworzy tekst będący złączeniem tekstów przysłanych w wektorze. \n
-        /// Łączone teksty rozdzielone są przysłanym delimiter'em.
-        /// \param data Wektor tekstów do połączenia,
-        /// \param delimiter Tekst wstawiany pomiędzy łączonymi tekstami.
-        /// \return String jako suma połączonych stringów.
-        static auto join(
-            std::span<std::string> data,
-            std::string_view delimiter = ",") noexcept
-        -> std::string;
-
         /// Zamiana całego kontenera bajtów na tekst,
         /// w którym liczby rozdzielone są przecinkami.
         /// \param data Widok kontenera bajtów do konwersji.
         /// \param as_hex Flaga określająca czy liczby mają być w reprezentacji szesnastkowej.
         /// \return Tekst z liczbami.
-        static auto bytes_to_string(
+        static auto bytes_as_hex(
             BytesView auto const data,
             bool as_hex = false) noexcept
         -> std::string
@@ -251,8 +314,7 @@ namespace bee {
             return join(elements, ", ");
         }
 
-
-        static auto bytes_to_string(
+        static auto bytes_to_hex(
             BytesView auto const data,
             size_t const n,
             bool as_hex = false) noexcept
@@ -274,36 +336,6 @@ namespace bee {
             return join(elements, ", ");
         }
 
-        /// Utworzenie wektora losowych bajtów.
-        /// \param n - oczekiwana liczba bajtów.
-        /// \return Wektor losowych bajtów.
-        template<typename T>
-        static auto random_bytes(size_t const n) noexcept -> std::vector<T> {
-            if (n == 0)
-                return std::vector<T>{};
-
-            std::random_device rd;
-            std::array<int, std::mt19937::state_size> seed_data{};
-            std::ranges::generate(seed_data, ref(rd));
-            std::seed_seq seq(begin(seed_data), end(seed_data));
-
-            auto mersenne_twister_engine = std::mt19937{seq};
-            auto ud = std::uniform_int_distribution<>{0, 255};
-
-            std::vector<T> buffer;
-            buffer.reserve(n);
-            for (auto i = 0; i < n; ++i) {
-                auto const c = ud(mersenne_twister_engine);
-                buffer.push_back(static_cast<T>(c));
-            }
-            return buffer;
-        }
-
-        /// Wyznaczenie katalogu domowego aktualnego użytkownika.
-        static std::string home_dir();
-
-        /// Utworzenie wszystkich katalogów pośrednich, włącznie z ostatnim.
-        static bool create_dirs(std::string_view path);
 
         /// Kompresja ciągłego ciągu bajtów (kontenera).
         // https://github.com/avaneev/lzav
@@ -341,40 +373,11 @@ namespace bee {
             return std::move(buffer);
         }
 
-        template<typename... Args>
-        static void print(std::format_string<Args...> fmt, Args... args) {
-            std::cout << std::format(fmt, std::forward<Args>(args)...) << std::flush;
-        }
-
-        template<typename... Args>
-        static void println(std::format_string<Args...> fmt, Args... args) {
-            std::cout << std::format(fmt, std::forward<Args>(args)...) << '\n' << std::flush;
-        }
-
-
-        template<typename... Args>
-        static void print_error(std::format_string<Args...> fmt, Args... args) {
-            std::cerr << std::format(fmt, std::forward<Args>(args)...);
-        }
-
-        template<typename... Args>
-        static void println_error(std::format_string<Args...> fmt, Args... args) {
-            std::cerr << std::format(fmt, std::forward<Args>(args)...) << "\n";;
-        }
-
-        template<typename... Args>
-        static void println_ptr(auto* ptr, std::format_string<Args...> fmt, Args... args) {
-            std::cout << std::format(fmt, std::forward<Args>(args)...) << " [" << ptr << "]\n" << std::flush;
-        }
-        // static void println_ptr(std::string_view const str, auto* ptr) {
-        //     std::cout << str << ", addr: " << ptr << "\n";
-        // }
-
         /// \brief Funkcja opakowująca obiekt funkcyjny, dla której mierzymy czas wykonania.\n
-        /// Usage: testowanie funkcji add()\n
+        /// Usage: testowanie funkcji add ()\n
         /// \code
-        /// auto r = box::execution_timer([]()
-        ///     { add(2, 3); },
+        /// auto r = box::execution_timer ([] ()
+        ///     {add (2, 3);},
         ///     1'000); \n
         /// std::print ("czas wykonania: {}\n", r ); \n
         /// \endcode
@@ -394,3 +397,4 @@ namespace bee {
         }
     };
 }
+

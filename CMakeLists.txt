@@ -1,27 +1,23 @@
-cmake_minimum_required(VERSION 3.30)
-project(toolbox)
-
+cmake_minimum_required(VERSION 3.31)
+project(tool)
 set(CMAKE_CXX_STANDARD 23)
 
 find_package(date REQUIRED)
-#add_subdirectory(tests)
 
-add_library(toolbox STATIC
-        toolbox.cpp toolbox.h
+add_library(tool STATIC
+        toolbox.cpp
         datime.h
-        crypto/blowfish/data.h
         types.h
-        crypto/blowfish/blowfish.cpp
-        crypto/blowfish/blowfish.h
+        lzav.h
+        file.h
+        all.hpp
         crypto/crypto.cpp
         crypto/crypto.h
+        crypto/blowfish/blowfish.cpp
+        crypto/blowfish/blowfish.h
         crypto/gost/gost.cpp
         crypto/gost/gost.h
-        file.h
-        lzav.h
-        tests/main.cc
-        tests/toolbox_test.cc
 )
 
-target_include_directories(toolbox PUBLIC date)
-target_link_libraries(toolbox PUBLIC date::date date::date-tz)
+target_include_directories(tool PUBLIC date)
+target_link_libraries(tool PUBLIC date::date date::date-tz)
