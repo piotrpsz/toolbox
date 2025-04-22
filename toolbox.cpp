@@ -61,10 +61,9 @@ namespace bee {
     *                         s p l i t                             *
     *                                                               *
     ****************************************************************/
-    auto box::split(
+    std::vector<std::string> box::split(
         std::string const& text,
         char const delimiter) noexcept
-    -> std::vector<std::string>
     {
         // Lepiej policzyć delimitery niż później realokować wektor.
         auto const n = std::accumulate(
@@ -89,6 +88,35 @@ namespace bee {
         tokens.shrink_to_fit();
         return tokens;
     }
+
+    std::vector<std::string> box::split_own(
+        std::string&& text,
+        char const delimiter) noexcept
+    {
+        // Lepiej policzyć delimitery niż później realokować wektor.
+        auto const n = std::accumulate(
+                text.cbegin(),
+                text.cend(),
+                size_t{},
+                [delimiter](int const count, char const c) {
+                    return c == delimiter ? count + 1 : count;
+                }
+        );
+
+        // Wektor o wstępnie zaalokowanej liczbie elementów.
+        std::vector<std::string> tokens{};
+        tokens.reserve(n + 1);
+
+        std::string token{};
+        std::istringstream stream{std::move(text)};
+        while (std::getline(stream, token, delimiter))
+            if (auto line = trim(token); !line.empty())
+                tokens.push_back(std::move(line));
+
+        tokens.shrink_to_fit();
+        return tokens;
+    }
+
 
     /****************************************************************
     *                                                               *

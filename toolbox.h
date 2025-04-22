@@ -215,6 +215,10 @@ namespace bee {
             char delimiter) noexcept
         -> std::vector<std::string>;
 
+        static std::vector<std::string> split_own(
+            std::string&& text,
+            char delimiter) noexcept;
+
         /// Tworzy tekst będący złączeniem tekstów przysłanych w wektorze. \n
         /// Łączone teksty rozdzielone są przysłanym delimiter'em.
         /// \param data Wektor tekstów do połączenia,

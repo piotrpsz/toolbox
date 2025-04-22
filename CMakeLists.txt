@@ -9,7 +9,6 @@ find_package(date REQUIRED)
 add_library(toolbox STATIC
         toolbox.cpp toolbox.h
         datime.h
-        all.h
         crypto/blowfish/data.h
         types.h
         crypto/blowfish/blowfish.cpp
