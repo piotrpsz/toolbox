@@ -32,6 +32,8 @@
 #include <format>
 #include <random>
 #include <chrono>
+#include <pwd.h>
+#include <unistd.h>
 
 namespace bee {
     class box {
@@ -42,7 +44,11 @@ namespace bee {
         /// Utworzenie wszystkich katalogów pośrednich, włącznie z ostatnim.
         static bool create_dirs(std::string_view path);
 
-        static std::string home_dir();
+        static std::string home_directory() {
+            if (auto const pw = getpwuid(getuid()))
+                return pw->pw_dir;
+            return {};
+        }
 
         template<typename... Args>
         static void print(std::format_string<Args...> fmt, Args... args) {

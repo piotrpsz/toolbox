@@ -161,9 +161,9 @@ namespace bee {
         return {};
     }
 
-    std::string box::home_dir() {
-        if (auto const pw = getpwuid(getuid()))
-            return pw->pw_dir;
-        return {};
-    }
+    // std::string box::home_directory() {
+    //     if (auto const pw = getpwuid(getuid()))
+    //         return pw->pw_dir;
+    //     return {};
+    // }
 }
